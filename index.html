@@ -19,7 +19,7 @@
             padding-bottom: 40px;
         }
 
-        /* POPUP LOGIN / PIN (Layar Penuh) */
+        /* OVERLAY LOCK */
         #authOverlay {
             position: fixed;
             top: 0;
@@ -96,7 +96,6 @@
             transform: translateY(-2px);
         }
 
-        /* HEADER DASHBOARD */
         header {
             background: rgba(30, 41, 59, 0.8);
             backdrop-filter: blur(10px);
@@ -128,17 +127,15 @@
             cursor: pointer;
         }
 
-        /* CONTAINER UTAMA */
         .container {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 20px auto;
             padding: 0 16px;
         }
 
-        /* KARTU KEUANGAN (CARDS) */
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -160,24 +157,24 @@
         }
 
         .card-value {
-            font-size: 26px;
+            font-size: 24px;
             font-weight: bold;
         }
 
         .val-budget { color: #38bdf8; }
+        .val-income { color: #34d399; }
         .val-expense { color: #f43f5e; }
         .val-balance { color: #10b981; }
 
-        /* FORMS & TABLE LAYOUT */
         .main-grid {
             display: grid;
             grid-template-columns: 1fr;
             gap: 20px;
         }
 
-        @media (min-width: 768px) {
+        @media (min-width: 850px) {
             .main-grid {
-                grid-template-columns: 320px 1fr;
+                grid-template-columns: 340px 1fr;
             }
         }
 
@@ -190,7 +187,7 @@
         }
 
         .form-card h3 {
-            font-size: 16px;
+            font-size: 15px;
             margin-bottom: 16px;
             color: #cbd5e1;
             border-bottom: 1px solid #334155;
@@ -235,12 +232,20 @@
             font-size: 13px;
         }
 
-        /* TABEL TRANSAKSI */
+        .btn-income {
+            background: #059669;
+        }
+
+        .btn-income:hover {
+            background: #10b981;
+        }
+
         .table-card {
             background: rgba(30, 41, 59, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 20px;
             padding: 20px;
+            margin-bottom: 20px;
             overflow: hidden;
         }
 
@@ -277,6 +282,11 @@
             color: #38bdf8;
         }
 
+        .badge-income {
+            background: #064e3b;
+            color: #34d399;
+        }
+
         .btn-del {
             background: rgba(244, 63, 94, 0.2);
             color: #f43f5e;
@@ -288,11 +298,28 @@
         }
 
         .hidden { display: none !important; }
+
+        .btn-bill {
+            display: inline-block;
+            background: #1e293b;
+            color: #38bdf8;
+            border: 1px solid #475569;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 11px;
+            transition: 0.2s;
+        }
+
+        .btn-bill:hover {
+            background: #334155;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
 
-    <!-- OVERLAY LOCK / SANDI -->
+    <!-- OVERLAY LOCK -->
     <div id="authOverlay">
         <div class="auth-card">
             <h2 id="authTitle">Masukkan PIN Akses</h2>
@@ -307,9 +334,8 @@
         </div>
     </div>
 
-    <!-- MAIN DASHBOARD CONTENT -->
+    <!-- DASHBOARD -->
     <div id="mainContent" class="hidden">
-        
         <header>
             <div style="font-size: 16px; font-weight: bold; background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Laporan Keuangan Gosen</div>
             <div class="logo">💎 FinSmart App</div>
@@ -317,12 +343,15 @@
         </header>
 
         <div class="container">
-            
-            <!-- KARTU KEUANGAN -->
+            <!-- CARDS RINGKASAN -->
             <div class="cards-grid">
                 <div class="card">
                     <div class="card-title">Anggaran Awal</div>
                     <div id="displayBudget" class="card-value val-budget">Rp 0</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Total Pemasukan</div>
+                    <div id="totalIncome" class="card-value val-income">Rp 0</div>
                 </div>
                 <div class="card">
                     <div class="card-title">Total Pengeluaran</div>
@@ -335,12 +364,11 @@
             </div>
 
             <div class="main-grid">
-                
-                <!-- SIDEBAR FORM -->
+                <!-- FORM KIRI -->
                 <div>
                     <!-- Form Anggaran -->
                     <div class="form-card">
-                        <h3>💰 Setel Anggaran</h3>
+                        <h3>💰 Setel Anggaran Awal</h3>
                         <form id="budgetForm">
                             <div class="form-group">
                                 <label>Total Saldo (Rp)</label>
@@ -350,9 +378,29 @@
                         </form>
                     </div>
 
+                    <!-- Form Pemasukan -->
+                    <div class="form-card">
+                        <h3>💵 Tambah Pemasukan</h3>
+                        <form id="incomeForm">
+                            <div class="form-group">
+                                <label>Nominal (Rp)</label>
+                                <input type="number" id="incomeAmount" class="form-control" placeholder="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Keterangan / Sumber</label>
+                                <input type="text" id="incomeDescription" class="form-control" placeholder="Contoh: Gaji Bulanan" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Tanggal</label>
+                                <input type="date" id="incomeDate" class="form-control" required>
+                            </div>
+                            <button type="submit" id="incomeSubmitBtn" class="btn-sub btn-income">Tambah Pemasukan</button>
+                        </form>
+                    </div>
+
                     <!-- Form Pengeluaran -->
                     <div class="form-card">
-                        <h3>➕ Tambah Transaksi</h3>
+                        <h3>➕ Tambah Pengeluaran</h3>
                         <form id="expenseForm">
                             <div class="form-group">
                                 <label>Nominal (Rp)</label>
@@ -378,36 +426,60 @@
                                     <option value="Lainnya">Lain-lain</option>
                                 </select>
                             </div>
-                            <button type="submit" class="btn-sub">Catat Transaksi</button>
+                            <div class="form-group">
+                                <label>Foto Bill / Bukti (Kamera/Galeri)</label>
+                                <input type="file" id="billImage" class="form-control" accept="image/*">
+                            </div>
+                            <button type="submit" id="submitBtn" class="btn-sub">Catat Pengeluaran</button>
                         </form>
                     </div>
                 </div>
 
-                <!-- TABLE CONTENT -->
-                <div class="table-card">
-                    <h3 style="font-size: 16px; margin-bottom: 16px; color: #cbd5e1;">📋 Riwayat Pengeluaran</h3>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Tanggal</th>
-                                    <th>Keterangan</th>
-                                    <th>Kategori</th>
-                                    <th style="text-align: right;">Jumlah</th>
-                                    <th style="text-align: center;">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="expenseTableBody">
-                                <!-- Isi Data -->
-                            </tbody>
-                        </table>
+                <!-- TABEL KANAN -->
+                <div>
+                    <!-- Tabel Pemasukan -->
+                    <div class="table-card">
+                        <h3 style="font-size: 16px; margin-bottom: 16px; color: #34d399;">💚 Riwayat Pemasukan</h3>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Keterangan</th>
+                                        <th style="text-align: right;">Jumlah</th>
+                                        <th style="text-align: center;">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="incomeTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Pengeluaran -->
+                    <div class="table-card">
+                        <h3 style="font-size: 16px; margin-bottom: 16px; color: #cbd5e1;">📋 Riwayat Pengeluaran</h3>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Keterangan</th>
+                                        <th>Kategori</th>
+                                        <th>Bukti</th>
+                                        <th style="text-align: right;">Jumlah</th>
+                                        <th style="text-align: center;">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expenseTableBody">
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
             </div>
-
         </div>
-
     </div>
 
     <!-- FIREBASE MODULE SCRIPT -->
@@ -423,6 +495,13 @@
             collection, 
             onSnapshot 
         } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+        
+        import { 
+            getStorage, 
+            ref, 
+            uploadBytes, 
+            getDownloadURL 
+        } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyAwDuNrGHwwyr6gU8MEJM6Ek-2B4NZ7yfY",
@@ -437,10 +516,11 @@
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const db = getFirestore(app);
+        const storage = getStorage(app);
 
-        // State variabel
         let savedPin = null;
         let expenses = [];
+        let incomes = [];
         let budget = 0;
 
         const authOverlay = document.getElementById('authOverlay');
@@ -448,36 +528,62 @@
         const pinForm = document.getElementById('pinForm');
         const pinInput = document.getElementById('pinInput');
 
-        // Referensi Dokumen & Koleksi Utama
         const gosenDocRef = doc(db, 'pengeluaran', 'Gosen');
         const transactionsColRef = collection(db, 'pengeluaran', 'Gosen', 'transaksi');
+        const incomesColRef = collection(db, 'pengeluaran', 'Gosen', 'pemasukan');
 
         const formatRupiah = (num) => {
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
         };
 
         const updateUI = () => {
-            const tbody = document.getElementById('expenseTableBody');
-            tbody.innerHTML = '';
+            // Render Tabel Pengeluaran
+            const tbodyExpense = document.getElementById('expenseTableBody');
+            tbodyExpense.innerHTML = '';
 
             expenses.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
                 const tr = document.createElement('tr');
+                const billHtml = item.billUrl 
+                    ? `<a href="${item.billUrl}" target="_blank" class="btn-bill">Lihat Bill</a>`
+                    : `<span style="color: #475569; font-size: 11px;">Tidak ada</span>`;
+
                 tr.innerHTML = `
                     <td style="color:#94a3b8;">${item.date}</td>
                     <td style="font-weight:600;">${item.description}</td>
                     <td><span class="badge">${item.category}</span></td>
+                    <td>${billHtml}</td>
                     <td style="text-align:right; color:#f43f5e; font-weight:bold;">${formatRupiah(item.amount)}</td>
                     <td style="text-align:center;">
                         <button onclick="deleteExpense('${item.id}')" class="btn-del">Hapus</button>
                     </td>
                 `;
-                tbody.appendChild(tr);
+                tbodyExpense.appendChild(tr);
             });
 
+            // Render Tabel Pemasukan
+            const tbodyIncome = document.getElementById('incomeTableBody');
+            tbodyIncome.innerHTML = '';
+
+            incomes.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="color:#94a3b8;">${item.date}</td>
+                    <td style="font-weight:600;">${item.description}</td>
+                    <td style="text-align:right; color:#34d399; font-weight:bold;">${formatRupiah(item.amount)}</td>
+                    <td style="text-align:center;">
+                        <button onclick="deleteIncome('${item.id}')" class="btn-del">Hapus</button>
+                    </td>
+                `;
+                tbodyIncome.appendChild(tr);
+            });
+
+            // Kalkulasi Total
             const totalExp = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
-            const balance = budget - totalExp;
+            const totalInc = incomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
+            const balance = (budget + totalInc) - totalExp;
 
             document.getElementById('displayBudget').innerText = formatRupiah(budget);
+            document.getElementById('totalIncome').innerText = formatRupiah(totalInc);
             document.getElementById('totalExpense').innerText = formatRupiah(totalExp);
             
             const balEl = document.getElementById('remainingBalance');
@@ -499,7 +605,7 @@
             }
         };
 
-        // Realtime Listener untuk Dokumen Utama (Budget & PIN)
+        // Listener Realtime Dokumen Utama
         onSnapshot(gosenDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
@@ -508,22 +614,27 @@
             }
             initAuth();
             updateUI();
-        }, (error) => {
-            console.error("Gagal mendengarkan perubahan data utama:", error);
         });
 
-        // Realtime Listener untuk Sub-koleksi Transaksi
+        // Listener Realtime Pengeluaran
         onSnapshot(transactionsColRef, (querySnap) => {
             expenses = [];
             querySnap.forEach((doc) => {
                 expenses.push({ id: doc.id, ...doc.data() });
             });
             updateUI();
-        }, (error) => {
-            console.error("Gagal mendengarkan transaksi:", error);
         });
 
-        // Form Submit PIN
+        // Listener Realtime Pemasukan
+        onSnapshot(incomesColRef, (querySnap) => {
+            incomes = [];
+            querySnap.forEach((doc) => {
+                incomes.push({ id: doc.id, ...doc.data() });
+            });
+            updateUI();
+        });
+
+        // Login PIN
         pinForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const val = pinInput.value;
@@ -548,7 +659,6 @@
             }
         });
 
-        // Reset PIN
         document.getElementById('resetPinBtn').addEventListener('click', async () => {
             if(confirm("Hapus PIN lama dan buat PIN baru?")) {
                 try {
@@ -562,14 +672,13 @@
             }
         });
 
-        // Kunci Aplikasi
         document.getElementById('lockAppBtn').addEventListener('click', () => {
             mainContent.classList.add('hidden');
             authOverlay.classList.remove('hidden');
             pinInput.value = '';
         });
 
-        // Form Simpan Anggaran
+        // Simpan Anggaran
         document.getElementById('budgetForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const newBudget = parseFloat(document.getElementById('budgetInput').value) || 0;
@@ -581,43 +690,97 @@
             }
         });
 
-        // Form Tambah Transaksi
+        // Tambah Pemasukan
+        document.getElementById('incomeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('incomeAmount').value);
+            const description = document.getElementById('incomeDescription').value;
+            const date = document.getElementById('incomeDate').value;
+
+            if (!amount || !description || !date) return;
+
+            try {
+                await addDoc(incomesColRef, {
+                    amount,
+                    description,
+                    date,
+                    createdAt: new Date()
+                });
+
+                document.getElementById('incomeAmount').value = '';
+                document.getElementById('incomeDescription').value = '';
+            } catch (err) {
+                alert("Gagal menambah pemasukan!");
+            }
+        });
+
+        // Tambah Pengeluaran
         document.getElementById('expenseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('amount').value);
             const description = document.getElementById('description').value;
             const date = document.getElementById('date').value;
             const category = document.getElementById('category').value;
+            const fileInput = document.getElementById('billImage');
+            const submitBtn = document.getElementById('submitBtn');
 
             if (!amount || !description || !date || !category) return;
 
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Mengunggah...";
+
             try {
+                let billUrl = null;
+
+                if (fileInput.files && fileInput.files[0]) {
+                    const file = fileInput.files[0];
+                    const storageRef = ref(storage, 'bills/' + Date.now() + '_' + file.name);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    billUrl = await getDownloadURL(snapshot.ref);
+                }
+
                 await addDoc(transactionsColRef, {
                     amount,
                     description,
                     date,
                     category,
+                    billUrl,
                     createdAt: new Date()
                 });
 
                 document.getElementById('amount').value = '';
                 document.getElementById('description').value = '';
+                fileInput.value = '';
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Catat Pengeluaran";
             } catch (err) {
-                alert("Gagal menambah transaksi!");
+                console.error(err);
+                alert("Gagal menambah pengeluaran!");
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Catat Pengeluaran";
             }
         });
 
-        // Fungsi Hapus Transaksi (Global Scope)
+        // Fungsi Hapus
         window.deleteExpense = async (id) => {
             try {
                 await deleteDoc(doc(db, 'pengeluaran', 'Gosen', 'transaksi', id));
             } catch (err) {
-                alert("Gagal menghapus transaksi!");
+                alert("Gagal menghapus pengeluaran!");
             }
         };
 
-        // Set default tanggal hari ini
+        window.deleteIncome = async (id) => {
+            try {
+                await deleteDoc(doc(db, 'pengeluaran', 'Gosen', 'pemasukan', id));
+            } catch (err) {
+                alert("Gagal menghapus pemasukan!");
+            }
+        };
+
+        // Tanggal default hari ini
         document.getElementById('date').valueAsDate = new Date();
+        document.getElementById('incomeDate').valueAsDate = new Date();
     </script>
 </body>
 </html>
