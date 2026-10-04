@@ -565,7 +565,21 @@
   const analytics = getAnalytics(app);
         const db = getFirestore(app);
 // Membaca data total_saldo dari Firestore
-function loadSaldoFromFirestore() { const docRef = doc(db, 'pengeluaran', 'Gosen'); onSnapshot(docRef, (docSnap) => { if (docSnap.exists()) { const data = docSnap.data(); if (data.total_saldo !== undefined) { budget = parseFloat(data.total_saldo) || 0; updateUI(); } } }, (error) => { console.error('Gagal mengambil data saldo:', error); }); }
+function loadSaldoFromFirestore() {
+  const docRef = doc(db, 'pengeluaran', 'Gosen');
+  onSnapshot(docRef, (docSnap) => {
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      if (data.Sisa_saldo !== undefined) {
+        budget = parseFloat(data.Sisa_saldo) || 0;
+        updateUI();
+      }
+    }
+  }, (error) => {
+    console.error('Gagal mengambil data saldo:', error);
+  });
+}
+
 // Panggil fungsi saat halaman selesai dimuat
 loadSaldoFromFirestore();
 
