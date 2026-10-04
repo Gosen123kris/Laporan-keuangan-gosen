@@ -100,7 +100,7 @@
         header {
             background: rgba(30, 41, 59, 0.8);
             backdrop-filter: blur(10px);
-            border-b: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding: 16px 20px;
             display: flex;
             justify-content: space-between;
@@ -410,25 +410,47 @@
 
     </div>
 
-    <script>
-        let savedPin = localStorage.getItem('app_pin') || null;
-        let expenses = JSON.parse(localStorage.getItem('app_expenses')) || [];
-        let budget = JSON.parse(localStorage.getItem('app_budget')) || 0;
+    <!-- FIREBASE MODULE SCRIPT -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js";
+        import { 
+            getFirestore, 
+            doc, 
+            setDoc, 
+            addDoc, 
+            deleteDoc, 
+            collection, 
+            onSnapshot 
+        } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAwDuNrGHwwyr6gU8MEJM6Ek-2B4NZ7yfY",
+            authDomain: "pengeluaran-vila-barat-gosen.firebaseapp.com",
+            projectId: "pengeluaran-vila-barat-gosen",
+            storageBucket: "pengeluaran-vila-barat-gosen.firebasestorage.app",
+            messagingSenderId: "760066798097",
+            appId: "1:760066798097:web:59d47e1366f88176f7f7b0",
+            measurementId: "G-LE8RD7QM7Q"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        // State variabel
+        let savedPin = null;
+        let expenses = [];
+        let budget = 0;
 
         const authOverlay = document.getElementById('authOverlay');
         const mainContent = document.getElementById('mainContent');
         const pinForm = document.getElementById('pinForm');
         const pinInput = document.getElementById('pinInput');
 
-        const initAuth = () => {
-            if (!savedPin) {
-                document.getElementById('authTitle').innerText = "Buat PIN Baru";
-                document.getElementById('authSubtitle').innerText = "Buat 6-digit PIN rahasia Anda";
-            } else {
-                document.getElementById('authTitle').innerText = "Masukkan PIN Akses";
-                document.getElementById('authSubtitle').innerText = "Gunakan PIN untuk membuka catatan Anda";
-            }
-        };
+        // Referensi Dokumen & Koleksi Utama
+        const gosenDocRef = doc(db, 'pengeluaran', 'Gosen');
+        const transactionsColRef = collection(db, 'pengeluaran', 'Gosen', 'transaksi');
 
         const formatRupiah = (num) => {
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
@@ -452,7 +474,7 @@
                 tbody.appendChild(tr);
             });
 
-            const totalExp = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+            const totalExp = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
             const balance = budget - totalExp;
 
             document.getElementById('displayBudget').innerText = formatRupiah(budget);
@@ -465,26 +487,60 @@
             } else {
                 balEl.style.color = '#10b981';
             }
-
-            localStorage.setItem('app_expenses', JSON.stringify(expenses));
-            localStorage.setItem('app_budget', JSON.stringify(budget));
         };
 
-        pinForm.addEventListener('submit', (e) => {
+        const initAuth = () => {
+            if (!savedPin) {
+                document.getElementById('authTitle').innerText = "Buat PIN Baru";
+                document.getElementById('authSubtitle').innerText = "Buat 6-digit PIN rahasia Anda";
+            } else {
+                document.getElementById('authTitle').innerText = "Masukkan PIN Akses";
+                document.getElementById('authSubtitle').innerText = "Gunakan PIN untuk membuka catatan Anda";
+            }
+        };
+
+        // Realtime Listener untuk Dokumen Utama (Budget & PIN)
+        onSnapshot(gosenDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.pin !== undefined) savedPin = data.pin;
+                if (data.budget !== undefined) budget = parseFloat(data.budget) || 0;
+            }
+            initAuth();
+            updateUI();
+        }, (error) => {
+            console.error("Gagal mendengarkan perubahan data utama:", error);
+        });
+
+        // Realtime Listener untuk Sub-koleksi Transaksi
+        onSnapshot(transactionsColRef, (querySnap) => {
+            expenses = [];
+            querySnap.forEach((doc) => {
+                expenses.push({ id: doc.id, ...doc.data() });
+            });
+            updateUI();
+        }, (error) => {
+            console.error("Gagal mendengarkan transaksi:", error);
+        });
+
+        // Form Submit PIN
+        pinForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const val = pinInput.value;
             if (!savedPin) {
-                savedPin = val;
-                localStorage.setItem('app_pin', savedPin);
-                alert("PIN Berhasil Dibuat!");
-                authOverlay.classList.add('hidden');
-                mainContent.classList.remove('hidden');
-                updateUI();
+                try {
+                    await setDoc(gosenDocRef, { pin: val }, { merge: true });
+                    savedPin = val;
+                    alert("PIN Berhasil Dibuat!");
+                    authOverlay.classList.add('hidden');
+                    mainContent.classList.remove('hidden');
+                } catch (err) {
+                    alert("Gagal menyimpan PIN ke server!");
+                }
             } else {
                 if (val === savedPin) {
                     authOverlay.classList.add('hidden');
                     mainContent.classList.remove('hidden');
-                    updateUI();
                 } else {
                     alert("PIN Salah!");
                     pinInput.value = '';
@@ -492,29 +548,41 @@
             }
         });
 
-        document.getElementById('resetPinBtn').addEventListener('click', () => {
+        // Reset PIN
+        document.getElementById('resetPinBtn').addEventListener('click', async () => {
             if(confirm("Hapus PIN lama dan buat PIN baru?")) {
-                localStorage.removeItem('app_pin');
-                savedPin = null;
-                pinInput.value = '';
-                initAuth();
+                try {
+                    await setDoc(gosenDocRef, { pin: null }, { merge: true });
+                    savedPin = null;
+                    pinInput.value = '';
+                    initAuth();
+                } catch (err) {
+                    alert("Gagal mereset PIN!");
+                }
             }
         });
 
+        // Kunci Aplikasi
         document.getElementById('lockAppBtn').addEventListener('click', () => {
             mainContent.classList.add('hidden');
             authOverlay.classList.remove('hidden');
             pinInput.value = '';
         });
 
-        document.getElementById('budgetForm').addEventListener('submit', (e) => {
+        // Form Simpan Anggaran
+        document.getElementById('budgetForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            budget = parseFloat(document.getElementById('budgetInput').value) || 0;
-            updateUI();
-            document.getElementById('budgetInput').value = '';
+            const newBudget = parseFloat(document.getElementById('budgetInput').value) || 0;
+            try {
+                await setDoc(gosenDocRef, { budget: newBudget }, { merge: true });
+                document.getElementById('budgetInput').value = '';
+            } catch (err) {
+                alert("Gagal menyimpan anggaran!");
+            }
         });
 
-        document.getElementById('expenseForm').addEventListener('submit', (e) => {
+        // Form Tambah Transaksi
+        document.getElementById('expenseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('amount').value);
             const description = document.getElementById('description').value;
@@ -523,65 +591,33 @@
 
             if (!amount || !description || !date || !category) return;
 
-            expenses.push({ id: Date.now().toString(), amount, description, date, category });
-            updateUI();
+            try {
+                await addDoc(transactionsColRef, {
+                    amount,
+                    description,
+                    date,
+                    category,
+                    createdAt: new Date()
+                });
 
-            document.getElementById('amount').value = '';
-            document.getElementById('description').value = '';
+                document.getElementById('amount').value = '';
+                document.getElementById('description').value = '';
+            } catch (err) {
+                alert("Gagal menambah transaksi!");
+            }
         });
 
-        window.deleteExpense = (id) => {
-            expenses = expenses.filter(x => x.id !== id);
-            updateUI();
+        // Fungsi Hapus Transaksi (Global Scope)
+        window.deleteExpense = async (id) => {
+            try {
+                await deleteDoc(doc(db, 'pengeluaran', 'Gosen', 'transaksi', id));
+            } catch (err) {
+                alert("Gagal menghapus transaksi!");
+            }
         };
 
+        // Set default tanggal hari ini
         document.getElementById('date').valueAsDate = new Date();
-        initAuth();
     </script>
 </body>
-    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js";
-  import { getFirestore, collection, getDocs, doc, addDoc, onSnapshot} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
-
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyAwDuNrGHwwyr6gU8MEJM6Ek-2B4NZ7yfY",
-    authDomain: "pengeluaran-vila-barat-gosen.firebaseapp.com",
-    projectId: "pengeluaran-vila-barat-gosen",
-    storageBucket: "pengeluaran-vila-barat-gosen.firebasestorage.app",
-    messagingSenderId: "760066798097",
-    appId: "1:760066798097:web:59d47e1366f88176f7f7b0",
-    measurementId: "G-LE8RD7QM7Q"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-        const db = getFirestore(app);
-// Membaca data total_saldo dari Firestore
-function loadSaldoFromFirestore() {
-  const docRef = doc(db, 'pengeluaran', 'Gosen');
-  onSnapshot(docRef, (docSnap) => {
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      if (data['Sisa saldo'] !== undefined) {
-        budget = parseFloat(data['Sisa saldo']) || 0;
-        updateUI();
-      }
-    }
-  }, (error) => {
-    console.error('Gagal mengambil data saldo:', error);
-  });
-}
-
-// Panggil fungsi saat halaman selesai dimuat
-loadSaldoFromFirestore();
-
-    </script>
 </html>
