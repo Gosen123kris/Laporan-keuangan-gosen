@@ -570,8 +570,8 @@ function loadSaldoFromFirestore() {
   onSnapshot(docRef, (docSnap) => {
     if (docSnap.exists()) {
       const data = docSnap.data();
-      if (data.Sisa_saldo !== undefined) {
-        budget = parseFloat(data.Sisa_saldo) || 0;
+      if (data['Sisa saldo'] !== undefined) {
+        budget = parseFloat(data['Sisa saldo']) || 0;
         updateUI();
       }
     }
