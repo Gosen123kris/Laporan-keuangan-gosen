@@ -1,276 +1,541 @@
-```html
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Pengeluaran</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <title>Laporan Keuangan GOSEN</title>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* gray-100 */
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            padding-bottom: 40px;
         }
-        /* Hide scrollbar for cleaner look in table overflow */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+
+        /* POPUP LOGIN / PIN (Layar Penuh) */
+        #authOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(15px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
-        .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
+
+        .auth-card {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 32px 24px;
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
         }
+
+        .auth-card h2 {
+            font-size: 22px;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .auth-card p {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 24px;
+        }
+
+        .pin-input {
+            width: 100%;
+            text-align: center;
+            font-size: 24px;
+            letter-spacing: 10px;
+            padding: 12px;
+            background: #0f172a;
+            border: 2px solid #475569;
+            border-radius: 12px;
+            color: #fff;
+            margin-bottom: 16px;
+            outline: none;
+        }
+
+        .pin-input:focus {
+            border-color: #6366f1;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        /* HEADER DASHBOARD */
+        header {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-b: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-lock {
+            background: #334155;
+            color: #fff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* CONTAINER UTAMA */
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 0 16px;
+        }
+
+        /* KARTU KEUANGAN (CARDS) */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-size: 26px;
+            font-weight: bold;
+        }
+
+        .val-budget { color: #38bdf8; }
+        .val-expense { color: #f43f5e; }
+        .val-balance { color: #10b981; }
+
+        /* FORMS & TABLE LAYOUT */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .main-grid {
+                grid-template-columns: 320px 1fr;
+            }
+        }
+
+        .form-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-card h3 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #cbd5e1;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #fff;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            border-color: #6366f1;
+        }
+
+        .btn-sub {
+            width: 100%;
+            padding: 10px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        /* TABEL TRANSAKSI */
+        .table-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background: #0f172a;
+            color: #94a3b8;
+            padding: 12px;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #334155;
+            color: #38bdf8;
+        }
+
+        .btn-del {
+            background: rgba(244, 63, 94, 0.2);
+            color: #f43f5e;
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .hidden { display: none !important; }
     </style>
 </head>
-<body class="text-gray-800 antialiased min-h-screen pb-10">
+<body>
 
-    <header class="bg-indigo-600 text-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center gap-3">
-            <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                <i class="fas fa-wallet text-xl"></i>
-            </div>
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight">Laporan Pengeluaran</h1>
-                <p class="text-indigo-200 text-sm mt-1">Catat dan pantau keuangan Anda dengan mudah</p>
-            </div>
+    <!-- OVERLAY LOCK / SANDI -->
+    <div id="authOverlay">
+        <div class="auth-card">
+            <h2 id="authTitle">Masukkan PIN Akses</h2>
+            <p id="authSubtitle">Gunakan PIN untuk membuka catatan keuangan Anda</p>
+            <form id="pinForm">
+                <input type="password" id="pinInput" maxlength="6" class="pin-input" placeholder="••••••" required autocomplete="off">
+                <button type="submit" class="btn-primary">Buka Dompet</button>
+            </form>
+            <button id="resetPinBtn" style="background:none; border:none; color:#64748b; font-size:11px; margin-top:16px; cursor:pointer;">
+                Lupa / Buat Ulang PIN
+            </button>
         </div>
-    </header>
+    </div>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- MAIN DASHBOARD CONTENT -->
+    <div id="mainContent" class="hidden">
         
-        <!-- Left Column: Form -->
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-8">
-                <h2 class="text-lg font-semibold mb-5 flex items-center gap-2">
-                    <i class="fas fa-plus-circle text-indigo-500"></i> Tambah Pengeluaran
-                </h2>
-                
-                <form id="expenseForm" class="space-y-4">
-                    <div>
-                        <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Nominal (Rp)</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500 sm:text-sm">Rp</span>
-                            </div>
-                            <input type="number" id="amount" required min="1" class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gray-50 focus:bg-white sm:text-sm" placeholder="0">
-                        </div>
-                    </div>
+        <header>
+            <div class="logo">💎 FinSmart App</div>
+            <button id="lockAppBtn" class="btn-lock">🔒 Kunci Aplikasi</button>
+        </header>
 
-                    <div>
-                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Keterangan</label>
-                        <input type="text" id="description" required class="block w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gray-50 focus:bg-white sm:text-sm" placeholder="Misal: Makan Siang">
-                    </div>
-
-                    <div>
-                        <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
-                        <input type="date" id="date" required class="block w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gray-50 focus:bg-white sm:text-sm">
-                    </div>
-
-                    <div>
-                        <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                        <select id="category" required class="block w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gray-50 focus:bg-white sm:text-sm">
-                            <option value="" disabled selected>Pilih Kategori...</option>
-                            <option value="Makanan">🍔 Makanan & Minuman</option>
-                            <option value="Transportasi">🚗 Transportasi</option>
-                            <option value="Belanja">🛍️ Belanja</option>
-                            <option value="Tagihan">📄 Tagihan & Utilitas</option>
-                            <option value="Hiburan">🎬 Hiburan</option>
-                            <option value="Lainnya">📦 Lainnya</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" class="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors mt-6">
-                        <i class="fas fa-save"></i> Simpan Data
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        <div class="lg:col-span-2 space-y-6">
+        <div class="container">
             
-            <!-- Summary Card -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center justify-between">
-                <div>
-                    <h3 class="text-sm font-medium text-gray-500">Total Pengeluaran</h3>
-                    <p id="totalExpense" class="text-3xl font-bold text-gray-900 mt-1">Rp 0</p>
+            <!-- KARTU KEUANGAN -->
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-title">Anggaran Awal</div>
+                    <div id="displayBudget" class="card-value val-budget">Rp 0</div>
                 </div>
-                <div class="h-14 w-14 bg-red-100 rounded-full flex items-center justify-center text-red-500">
-                    <i class="fas fa-arrow-trend-down text-2xl"></i>
+                <div class="card">
+                    <div class="card-title">Total Pengeluaran</div>
+                    <div id="totalExpense" class="card-value val-expense">Rp 0</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Sisa Saldo</div>
+                    <div id="remainingBalance" class="card-value val-balance">Rp 0</div>
                 </div>
             </div>
 
-            <!-- Table Card -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h2 class="text-lg font-semibold flex items-center gap-2">
-                        <i class="fas fa-list text-indigo-500"></i> Riwayat Pengeluaran
-                    </h2>
-                    <span id="itemCount" class="text-xs font-medium bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full">0 Data</span>
-                </div>
+            <div class="main-grid">
                 
-                <div class="overflow-x-auto no-scrollbar">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tanggal</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Keterangan</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Kategori</th>
-                                <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Nominal</th>
-                                <th scope="col" class="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="expenseTableBody" class="bg-white divide-y divide-gray-100">
-                            <!-- Data akan dimuat melalui JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Empty State -->
-                <div id="emptyState" class="py-12 px-6 text-center flex flex-col items-center justify-center">
-                    <div class="h-24 w-24 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
-                        <i class="fas fa-receipt text-4xl"></i>
+                <!-- SIDEBAR FORM -->
+                <div>
+                    <!-- Form Anggaran -->
+                    <div class="form-card">
+                        <h3>💰 Setel Anggaran</h3>
+                        <form id="budgetForm">
+                            <div class="form-group">
+                                <label>Total Saldo (Rp)</label>
+                                <input type="number" id="budgetInput" class="form-control" placeholder="Contoh: 2000000" required>
+                            </div>
+                            <button type="submit" class="btn-sub" style="background: #0284c7;">Simpan Anggaran</button>
+                        </form>
                     </div>
-                    <h3 class="text-lg font-medium text-gray-900">Belum ada data</h3>
-                    <p class="text-gray-500 mt-1 max-w-sm mx-auto text-sm">Silakan tambahkan pengeluaran pertama Anda menggunakan form di sebelah kiri.</p>
+
+                    <!-- Form Pengeluaran -->
+                    <div class="form-card">
+                        <h3>➕ Tambah Transaksi</h3>
+                        <form id="expenseForm">
+                            <div class="form-group">
+                                <label>Nominal (Rp)</label>
+                                <input type="number" id="amount" class="form-control" placeholder="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Keterangan</label>
+                                <input type="text" id="description" class="form-control" placeholder="Contoh: Beli Kopi" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Tanggal</label>
+                                <input type="date" id="date" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Kategori</label>
+                                <select id="category" class="form-control" required>
+                                    <option value="" disabled selected>Pilih Kategori...</option>
+                                    <option value="Makanan">Makanan & Minuman</option>
+                                    <option value="Transportasi">Transportasi</option>
+                                    <option value="Belanja">Belanja</option>
+                                    <option value="Tagihan">Tagihan</option>
+                                    <option value="Hiburan">Hiburan</option>
+                                    <option value="Lainnya">Lain-lain</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn-sub">Catat Transaksi</button>
+                        </form>
+                    </div>
                 </div>
+
+                <!-- TABLE CONTENT -->
+                <div class="table-card">
+                    <h3 style="font-size: 16px; margin-bottom: 16px; color: #cbd5e1;">📋 Riwayat Pengeluaran</h3>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Keterangan</th>
+                                    <th>Kategori</th>
+                                    <th style="text-align: right;">Jumlah</th>
+                                    <th style="text-align: center;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenseTableBody">
+                                <!-- Isi Data -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
 
         </div>
-    </main>
+
+    </div>
 
     <script>
-        // State Management
-        let expenses = [];
-        
-        // DOM Elements
-        const expenseForm = document.getElementById('expenseForm');
-        const expenseTableBody = document.getElementById('expenseTableBody');
-        const totalExpenseEl = document.getElementById('totalExpense');
-        const emptyStateEl = document.getElementById('emptyState');
-        const itemCountEl = document.getElementById('itemCount');
-        
-        // Set default date to today
-        document.getElementById('date').valueAsDate = new Date();
+        let savedPin = localStorage.getItem('app_pin') || null;
+        let expenses = JSON.parse(localStorage.getItem('app_expenses')) || [];
+        let budget = JSON.parse(localStorage.getItem('app_budget')) || 0;
 
-        // Utilities
-        const formatRupiah = (number) => {
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(number);
-        };
+        const authOverlay = document.getElementById('authOverlay');
+        const mainContent = document.getElementById('mainContent');
+        const pinForm = document.getElementById('pinForm');
+        const pinInput = document.getElementById('pinInput');
 
-        const formatDate = (dateString) => {
-            const options = { day: 'numeric', month: 'short', year: 'numeric' };
-            return new Date(dateString).toLocaleDateString('id-ID', options);
-        };
-
-        const getCategoryIcon = (category) => {
-            const icons = {
-                'Makanan': '<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded-md text-xs font-medium"><i class="fas fa-hamburger mr-1"></i> Makanan</span>',
-                'Transportasi': '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-md text-xs font-medium"><i class="fas fa-car mr-1"></i> Transportasi</span>',
-                'Belanja': '<span class="bg-pink-100 text-pink-700 px-2 py-1 rounded-md text-xs font-medium"><i class="fas fa-shopping-bag mr-1"></i> Belanja</span>',
-                'Tagihan': '<span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-md text-xs font-medium"><i class="fas fa-file-invoice-dollar mr-1"></i> Tagihan</span>',
-                'Hiburan': '<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md text-xs font-medium"><i class="fas fa-film mr-1"></i> Hiburan</span>',
-                'Lainnya': '<span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-md text-xs font-medium"><i class="fas fa-box mr-1"></i> Lainnya</span>'
-            };
-            return icons[category] || icons['Lainnya'];
-        };
-
-        // UI Updates
-        const updateUI = () => {
-            // Update Table
-            expenseTableBody.innerHTML = '';
-            
-            if (expenses.length === 0) {
-                emptyStateEl.style.display = 'flex';
-                document.querySelector('table').style.display = 'none';
+        const initAuth = () => {
+            if (!savedPin) {
+                document.getElementById('authTitle').innerText = "Buat PIN Baru";
+                document.getElementById('authSubtitle').innerText = "Buat 6-digit PIN rahasia Anda";
             } else {
-                emptyStateEl.style.display = 'none';
-                document.querySelector('table').style.display = 'table';
-                
-                // Sort by date descending (newest first)
-                const sortedExpenses = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
-                
-                sortedExpenses.forEach(expense => {
-                    const row = document.createElement('tr');
-                    row.className = 'hover:bg-gray-50 transition-colors group';
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            ${formatDate(expense.date)}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">${expense.description}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            ${getCategoryIcon(expense.category)}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">
-                            ${formatRupiah(expense.amount)}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                            <button onclick="deleteExpense('${expense.id}')" class="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50 opacity-0 group-hover:opacity-100 focus:opacity-100">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </td>
-                    `;
-                    expenseTableBody.appendChild(row);
-                });
+                document.getElementById('authTitle').innerText = "Masukkan PIN Akses";
+                document.getElementById('authSubtitle').innerText = "Gunakan PIN untuk membuka catatan Anda";
+            }
+        };
+
+        const formatRupiah = (num) => {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
+        };
+
+        const updateUI = () => {
+            const tbody = document.getElementById('expenseTableBody');
+            tbody.innerHTML = '';
+
+            expenses.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="color:#94a3b8;">${item.date}</td>
+                    <td style="font-weight:600;">${item.description}</td>
+                    <td><span class="badge">${item.category}</span></td>
+                    <td style="text-align:right; color:#f43f5e; font-weight:bold;">${formatRupiah(item.amount)}</td>
+                    <td style="text-align:center;">
+                        <button onclick="deleteExpense('${item.id}')" class="btn-del">Hapus</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const totalExp = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+            const balance = budget - totalExp;
+
+            document.getElementById('displayBudget').innerText = formatRupiah(budget);
+            document.getElementById('totalExpense').innerText = formatRupiah(totalExp);
+            
+            const balEl = document.getElementById('remainingBalance');
+            balEl.innerText = formatRupiah(balance);
+            if (balance < 0) {
+                balEl.style.color = '#f43f5e';
+            } else {
+                balEl.style.color = '#10b981';
             }
 
-            // Update Summary
-            const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-            totalExpenseEl.textContent = formatRupiah(total);
-            itemCountEl.textContent = `${expenses.length} Data`;
+            localStorage.setItem('app_expenses', JSON.stringify(expenses));
+            localStorage.setItem('app_budget', JSON.stringify(budget));
         };
 
-        // Add Expense Action
-        expenseForm.addEventListener('submit', (e) => {
+        pinForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            
+            const val = pinInput.value;
+            if (!savedPin) {
+                savedPin = val;
+                localStorage.setItem('app_pin', savedPin);
+                alert("PIN Berhasil Dibuat!");
+                authOverlay.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                updateUI();
+            } else {
+                if (val === savedPin) {
+                    authOverlay.classList.add('hidden');
+                    mainContent.classList.remove('hidden');
+                    updateUI();
+                } else {
+                    alert("PIN Salah!");
+                    pinInput.value = '';
+                }
+            }
+        });
+
+        document.getElementById('resetPinBtn').addEventListener('click', () => {
+            if(confirm("Hapus PIN lama dan buat PIN baru?")) {
+                localStorage.removeItem('app_pin');
+                savedPin = null;
+                pinInput.value = '';
+                initAuth();
+            }
+        });
+
+        document.getElementById('lockAppBtn').addEventListener('click', () => {
+            mainContent.classList.add('hidden');
+            authOverlay.classList.remove('hidden');
+            pinInput.value = '';
+        });
+
+        document.getElementById('budgetForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            budget = parseFloat(document.getElementById('budgetInput').value) || 0;
+            updateUI();
+            document.getElementById('budgetInput').value = '';
+        });
+
+        document.getElementById('expenseForm').addEventListener('submit', (e) => {
+            e.preventDefault();
             const amount = parseFloat(document.getElementById('amount').value);
             const description = document.getElementById('description').value;
             const date = document.getElementById('date').value;
             const category = document.getElementById('category').value;
-            
+
             if (!amount || !description || !date || !category) return;
 
-            const newExpense = {
-                id: Date.now().toString(),
-                amount,
-                description,
-                date,
-                category
-            };
+            expenses.push({ id: Date.now().toString(), amount, description, date, category });
+            updateUI();
 
-            expenses.push(newExpense);
-            
-            // Reset form fields except date
             document.getElementById('amount').value = '';
             document.getElementById('description').value = '';
-            document.getElementById('category').value = '';
-            
-            // Focus back to amount for easy continuous entry
-            document.getElementById('amount').focus();
-
-            updateUI();
         });
 
-        // Delete Expense Action
         window.deleteExpense = (id) => {
-            expenses = expenses.filter(exp => exp.id !== id);
+            expenses = expenses.filter(x => x.id !== id);
             updateUI();
         };
 
-        // Initial Render
-        updateUI();
-
+        document.getElementById('date').valueAsDate = new Date();
+        initAuth();
     </script>
 </body>
 </html>
-```
