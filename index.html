@@ -801,29 +801,49 @@
         });
 
         // Fungsi Hapus
-        window.deleteExpense = async (id) => {
-  let pin = prompt("Masukkan PIN:");
-  if (pin === "1234") {
-    alert("Akses diterima.");
-    try {
-      await deleteDoc(doc(db, "pengeluaran", "Gosen", "transaksi", id));
-      alert("Pengeluaran berhasil dihapus.");
-    } catch (err) {
-      alert("Gagal menghapus pengeluaran!");
+        // Fungsi Hapus Pengeluaran
+window.deleteExpense = async (id) => {
+    let pin = prompt("Masukkan PIN:");
+    if (pin === "1234") {
+        try {
+            await deleteDoc(doc(db, "pengeluaran", "Gosen", "transaksi", id));
+            alert("Pengeluaran berhasil dihapus.");
+        } catch (err) {
+            console.error(err);
+            alert("Gagal menghapus pengeluaran!");
+        }
+    } else {
+        alert("PIN salah. Penghapusan dibatalkan.");
     }
-  } else {
-    alert("PIN salah. Penghapusan dibatalkan.");
-  }
 };
-        };
 
-        window.deleteIncome = async (id) => {
-            try {
-                await deleteDoc(doc(db, 'pengeluaran', 'Gosen', 'pemasukan', id));
-            } catch (err) {
-                alert("Gagal menghapus pemasukan!");
-            }
-        };
+// Fungsi Hapus Pemasukan
+window.deleteIncome = async (id) => {
+    let pin = prompt("Masukkan PIN:");
+    if (pin === "1234") {
+        try {
+            await deleteDoc(doc(db, "pemasukan", "Gosen", "transaksi", id));
+            alert("Pemasukan berhasil dihapus.");
+        } catch (err) {
+            console.error(err);
+            alert("Gagal menghapus pemasukan!");
+        }
+    } else {
+        alert("PIN salah. Penghapusan dibatalkan.");
+    }
+};
+
+// Fungsi Edit Data (Contoh untuk Pengeluaran)
+window.editExpense = async (id) => {
+    let pin = prompt("Masukkan PIN:");
+    if (pin === "1234") {
+        alert("Akses diterima. Silakan edit data.");
+        // Tambahkan logika untuk membuka modal atau form edit di sini
+    } else {
+        alert("PIN salah. Edit dibatalkan.");
+    }
+};
+
 
         // Tanggal default hari ini
         document.getElementById('date').valueAsDate = new Date();
