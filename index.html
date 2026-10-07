@@ -119,6 +119,11 @@
             -webkit-text-fill-color: transparent;
         }
 
+        .header-btns {
+            display: flex;
+            gap: 8px;
+        }
+
         .btn-lock {
             background: #334155;
             color: #fff;
@@ -301,15 +306,21 @@
             color: #38bdf8;
         }
 
-        .badge-income {
-            background: #064e3b;
-            color: #34d399;
-        }
-
         .btn-del {
             background: rgba(244, 63, 94, 0.2);
             color: #f43f5e;
             border: 1px solid rgba(244, 63, 94, 0.3);
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 4px;
+        }
+
+        .btn-edit {
+            background: rgba(234, 179, 8, 0.2);
+            color: #eab308;
+            border: 1px solid rgba(234, 179, 8, 0.3);
             padding: 4px 8px;
             border-radius: 6px;
             cursor: pointer;
@@ -358,7 +369,10 @@
         <header>
             <div style="font-size: 16px; font-weight: bold; background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Laporan Keuangan Gosen</div>
             <div class="logo">💎 FinSmart App</div>
-            <button id="lockAppBtn" class="btn-lock">🔒 Kunci Aplikasi</button>
+            <div class="header-btns">
+                <button id="changeEditPinBtn" class="btn-lock" style="background: #eab308; color: #000; font-weight: bold;">✏️ Set PIN Edit</button>
+                <button id="lockAppBtn" class="btn-lock">🔒 Kunci Aplikasi</button>
+            </div>
         </header>
 
         <div class="container">
@@ -530,7 +544,7 @@
         const db = getFirestore(app);
 
         let savedPin = null;
-        let editPin = "2000"; // Contoh PIN khusus Edit
+        let editPin = "2000"; // PIN Khusus Edit default
         let expenses = [];
         let incomes = [];
         let budget = 0;
@@ -554,11 +568,11 @@
                 alert("PIN belum dibuat!");
                 return false;
             }
-            const inputPin = prompt("Masukkan PIN Anda:");
+            const inputPin = prompt("Masukkan PIN Utama Anda:");
             if (inputPin === savedPin) {
                 return true;
             } else {
-                alert("PIN salah. Akses ditolak.");
+                alert("PIN Utama salah. Akses ditolak.");
                 return false;
             }
         };
@@ -568,7 +582,7 @@
             if (inputPin === editPin) {
                 return true;
             } else {
-                alert("PIN Salah! Akses edit ditolak.");
+                alert("PIN Edit Salah! Akses edit ditolak.");
                 return false;
             }
         };
@@ -591,10 +605,11 @@
                     <td>${billHtml}</td>
                     <td style="text-align:right; color:#f43f5e; font-weight:bold;">${formatRupiah(item.amount)}</td>
                     <td style="text-align:center;">
+                        <button onclick="editExpense('${item.id}')" class="btn-edit">Edit</button>
                         <button onclick="deleteExpense('${item.id}')" class="btn-del">Hapus</button>
                     </td>
                 `;
-                expenseTableBody.appendChild(tr);
+                tbodyExpense.appendChild(tr);
             });
 
             // Render Tabel Pemasukan
@@ -611,7 +626,7 @@
                         <button onclick="deleteIncome('${item.id}')" class="btn-del">Hapus</button>
                     </td>
                 `;
-                incomeTableBody.appendChild(tr);
+                tbodyIncome.appendChild(tr);
             });
 
             // Kalkulasi Total
@@ -647,7 +662,11 @@
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 if (data.pin !== undefined) savedPin = data.pin;
+                if (data.editPin !== undefined) editPin = data.editPin;
                 if (data.budget !== undefined) budget = parseFloat(data.budget) || 0;
+            } else {
+                // Inisialisasi awal editPin ke server jika dokumen belum ada
+                setDoc(gosenDocRef, { editPin: "2000" }, { merge: true });
             }
             initAuth();
             updateUI();
@@ -677,7 +696,7 @@
             const val = pinInput.value;
             if (!savedPin) {
                 try {
-                    await setDoc(gosenDocRef, { pin: val }, { merge: true });
+                    await setDoc(gosenDocRef, { pin: val, editPin: "2000" }, { merge: true });
                     savedPin = val;
                     alert("PIN Berhasil Dibuat!");
                     authOverlay.classList.add('hidden');
@@ -715,6 +734,20 @@
             mainContent.classList.add('hidden');
             authOverlay.classList.remove('hidden');
             pinInput.value = '';
+        });
+
+        // Ubah PIN Edit
+        document.getElementById('changeEditPinBtn').addEventListener('click', async () => {
+            if (!verifyPin()) return;
+            const newEditPin = prompt("Masukkan PIN Edit baru (contoh: 2000):");
+            if (newEditPin) {
+                try {
+                    await setDoc(gosenDocRef, { editPin: newEditPin }, { merge: true });
+                    alert("PIN Edit berhasil diubah menjadi: " + newEditPin);
+                } catch (err) {
+                    alert("Gagal mengubah PIN Edit!");
+                }
+            }
         });
 
         // Simpan Anggaran & Otomatis Tambah ke Riwayat Pemasukan
@@ -843,7 +876,7 @@
             }
         });
 
-        // Fungsi Hapus Global
+        // Fungsi Hapus Global (Gunakan PIN Utama)
         window.deleteExpense = async (id) => {
             if (!verifyPin()) return;
             try {
@@ -866,10 +899,10 @@
             }
         };
 
-        // Fungsi Edit Global
+        // Fungsi Edit Global (Khusus Gunakan PIN Edit "2000")
         window.editExpense = async (id) => {
             if (!verifyEditPin()) return;
-            alert("Akses diterima. Silakan edit data.");
+            alert("Akses Edit Diterima! Silakan ubah data.");
         };
 
         // Tanggal default hari ini
