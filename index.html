@@ -732,13 +732,6 @@
             try {
                 let billUrl = null;
 
-                if (fileInput.files && fileInput.files[0]) {
-                    const file = fileInput.files[0];
-                    const storageRef = ref(storage, 'bills/' + Date.now() + '_' + file.name);
-                    const snapshot = await uploadBytes(storageRef, file);
-                    billUrl = await getDownloadURL(snapshot.ref);
-                }
-
                 await addDoc(transactionsColRef, {
                     amount,
                     description,
@@ -789,6 +782,7 @@
   (error, result) => {
     if (!error && result && result.event === 'success') {
       console.log('Done! Here is the image info: ', result.info.secure_url);
+        billUrl = result.info.secure_url;
       // Simpan URL ini ke database atau state aplikasimu
     }
   }
