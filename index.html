@@ -715,35 +715,50 @@
         });
 
         // Tambah Pengeluaran
+                // Tambah Pengeluaran
+        let currentBillUrl = null;
+
+        // Inisialisasi Cloudinary Widget
+        const myWidget = cloudinary.createUploadWidget(
+            {
+                cloudName: 'cwg8z0zz',
+                uploadPreset: 'Gosenkris'
+            },
+            (error, result) => {
+                if (!error && result && result.event === 'success') {
+                    console.log('Done! Here is the image info: ', result.info.secure_url);
+                    currentBillUrl = result.info.secure_url;
+                    alert("Foto bukti berhasil diunggah!");
+                }
+            }
+        );
+
         document.getElementById('expenseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('amount').value);
             const description = document.getElementById('description').value;
             const date = document.getElementById('date').value;
             const category = document.getElementById('category').value;
-            const fileInput = document.getElementById('billImage');
             const submitBtn = document.getElementById('submitBtn');
 
             if (!amount || !description || !date || !category) return;
 
             submitBtn.disabled = true;
-            submitBtn.innerText = "Mengunggah...";
+            submitBtn.innerText = "Menyimpan...";
 
             try {
-                let billUrl = null;
-
                 await addDoc(transactionsColRef, {
                     amount,
                     description,
                     date,
                     category,
-                    billUrl,
+                    billUrl: currentBillUrl,
                     createdAt: new Date()
                 });
 
                 document.getElementById('amount').value = '';
                 document.getElementById('description').value = '';
-                fileInput.value = '';
+                currentBillUrl = null;
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Catat Pengeluaran";
             } catch (err) {
@@ -770,6 +785,19 @@
                 alert("Gagal menghapus pemasukan!");
             }
         };
+
+        // Tanggal default hari ini
+        document.getElementById('date').valueAsDate = new Date();
+        document.getElementById('incomeDate').valueAsDate = new Date();
+
+        // Listener untuk elemen input/tombol upload jika menggunakan widget Cloudinary
+        const uploadBtn = document.getElementById('billImage');
+        if (uploadBtn) {
+            uploadBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                myWidget.open();
+            });
+        }
 
         // Tanggal default hari ini
         document.getElementById('date').valueAsDate = new Date();
