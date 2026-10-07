@@ -781,6 +781,27 @@
         // Tanggal default hari ini
         document.getElementById('date').valueAsDate = new Date();
         document.getElementById('incomeDate').valueAsDate = new Date();
+        const myWidget = cloudinary.createUploadWidget(
+  {
+    cloudName: 'cwg8z0zz',
+    uploadPreset: 'YOUR_UPLOAD_PRESET'
+  },
+  (error, result) => {
+    if (!error && result && result.event === 'success') {
+      console.log('Done! Here is the image info: ', result.info.secure_url);
+      // Simpan URL ini ke database atau state aplikasimu
+    }
+  }
+);
+
+document.getElementById('upload_widget').addEventListener(
+  'click',
+  function() {
+    myWidget.open();
+  },
+  false
+);
+
     </script>
 </body>
 </html>
