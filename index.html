@@ -865,6 +865,14 @@ window.deleteExpense = async (id) => {
         alert("PIN salah. Penghapusan dibatalkan.");
     }
 };
+        window.editExpense = async (id) => {
+    let pin = prompt("Masukkan PIN:");
+    if (pin === "2000") {
+        alert("Akses diterima. Silakan edit data.");
+    } else {
+        alert("PIN salah. Edit dibatalkan.");
+    }
+};
 
 window.deleteIncome = async (id) => {
     let pin = prompt("Masukkan PIN:");
