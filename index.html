@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Keuangan GOSEN</title>
+    <!-- Cloudinary Widget Script -->
+    <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -240,6 +242,23 @@
             background: #10b981;
         }
 
+        .btn-upload {
+            background: #1e293b;
+            color: #38bdf8;
+            border: 1px dashed #475569;
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+
+        .btn-upload:hover {
+            background: #334155;
+            border-color: #38bdf8;
+        }
+
         .table-card {
             background: rgba(30, 41, 59, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -428,7 +447,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Foto Bill / Bukti (Kamera/Galeri)</label>
-                                <input type="file" id="billImage" class="form-control" accept="image/*">
+                                <button type="button" id="uploadBtn" class="btn-upload">📷 Unggah Bukti Pembayaran</button>
                             </div>
                             <button type="submit" id="submitBtn" class="btn-sub">Catat Pengeluaran</button>
                         </form>
@@ -495,13 +514,6 @@
             collection, 
             onSnapshot 
         } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
-        
-        import { 
-            getStorage, 
-            ref, 
-            uploadBytes, 
-            getDownloadURL 
-        } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyAwDuNrGHwwyr6gU8MEJM6Ek-2B4NZ7yfY",
@@ -516,12 +528,12 @@
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const db = getFirestore(app);
-        const storage = getStorage(app);
 
         let savedPin = null;
         let expenses = [];
         let incomes = [];
         let budget = 0;
+        let currentBillUrl = null;
 
         const authOverlay = document.getElementById('authOverlay');
         const mainContent = document.getElementById('mainContent');
@@ -714,12 +726,8 @@
             }
         });
 
-        // Tambah Pengeluaran
-                // Tambah Pengeluaran
-        let currentBillUrl = null;
-
         // Inisialisasi Cloudinary Widget
-        const myWidget = cloudinary.createUploadWidget(
+        const myWidget = window.cloudinary.createUploadWidget(
             {
                 cloudName: 'cwg8z0zz',
                 uploadPreset: 'Gosenkris'
@@ -728,11 +736,27 @@
                 if (!error && result && result.event === 'success') {
                     console.log('Done! Here is the image info: ', result.info.secure_url);
                     currentBillUrl = result.info.secure_url;
+                    const uploadBtn = document.getElementById('uploadBtn');
+                    if (uploadBtn) {
+                        uploadBtn.innerText = "✓ Bukti Terunggah";
+                        uploadBtn.style.borderColor = "#34d399";
+                        uploadBtn.style.color = "#34d399";
+                    }
                     alert("Foto bukti berhasil diunggah!");
                 }
             }
         );
 
+        // Listener Tombol Upload Bukti
+        const uploadBtn = document.getElementById('uploadBtn');
+        if (uploadBtn) {
+            uploadBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                myWidget.open();
+            });
+        }
+
+        // Tambah Pengeluaran
         document.getElementById('expenseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('amount').value);
@@ -759,6 +783,13 @@
                 document.getElementById('amount').value = '';
                 document.getElementById('description').value = '';
                 currentBillUrl = null;
+                
+                if (uploadBtn) {
+                    uploadBtn.innerText = "📷 Unggah Bukti Pembayaran";
+                    uploadBtn.style.borderColor = "#475569";
+                    uploadBtn.style.color = "#38bdf8";
+                }
+
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Catat Pengeluaran";
             } catch (err) {
@@ -789,32 +820,6 @@
         // Tanggal default hari ini
         document.getElementById('date').valueAsDate = new Date();
         document.getElementById('incomeDate').valueAsDate = new Date();
-
-        // Listener untuk elemen input/tombol upload jika menggunakan widget Cloudinary
-        const uploadBtn = document.getElementById('billImage');
-        if (uploadBtn) {
-            uploadBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                myWidget.open();
-            });
-        }
-
-        // Tanggal default hari ini
-        document.getElementById('date').valueAsDate = new Date();
-        document.getElementById('incomeDate').valueAsDate = new Date();
-        const myWidget = cloudinary.createUploadWidget(
-  {
-    cloudName: 'cwg8z0zz',
-    uploadPreset: 'Gosenkris'
-  },
-  (error, result) => {
-    if (!error && result && result.event === 'success') {
-      console.log('Done! Here is the image info: ', result.info.secure_url);
-        billUrl = result.info.secure_url;
-      // Simpan URL ini ke database atau state aplikasimu
-    }
-  }
-)
     </script>
 </body>
 </html>
