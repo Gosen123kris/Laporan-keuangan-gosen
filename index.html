@@ -802,12 +802,61 @@
 
         // Fungsi Hapus
         // Fungsi Hapus Pengeluaran
+window.addIncome = async (data) => {
+    let pin = prompt("Masukkan PIN:");
+    if (pin === "2000") {
+        try {
+            await addDoc(collection(db, "pemasukan", "Gosen", "transaksi"), data);
+            alert("Pemasukan berhasil ditambahkan.");
+            location.reload();
+        } catch (err) {
+            console.error(err);
+            alert("Gagal menambahkan pemasukan!");
+        }
+    } else {
+        alert("PIN salah. Penambahan dibatalkan.");
+    }
+};
+
+window.addExpense = async (data) => {
+    let pin = prompt("Masukkan PIN:");
+    if (pin === "2000") {
+        try {
+            await addDoc(collection(db, "pengeluaran", "Gosen", "transaksi"), data);
+            alert("Pengeluaran berhasil ditambahkan.");
+            location.reload();
+        } catch (err) {
+            console.error(err);
+            alert("Gagal menambahkan pengeluaran!");
+        }
+    } else {
+        alert("PIN salah. Penambahan dibatalkan.");
+    }
+};
+
+window.setInitialBudget = async (amount) => {
+    let pin = prompt("Masukkan PIN:");
+    if (pin === "2000") {
+        try {
+            await setDoc(doc(db, "anggaran", "Gosen"), { total: amount });
+            alert("Anggaran berhasil diperbarui.");
+            location.reload();
+        } catch (err) {
+            console.error(err);
+            alert("Gagal memperbarui anggaran!");
+        }
+    } else {
+        alert("PIN salah. Pengaturan dibatalkan.");
+    }
+};
+
 window.deleteExpense = async (id) => {
     let pin = prompt("Masukkan PIN:");
-    if (pin === "1234") {
+    if (pin === "2000") {
         try {
             await deleteDoc(doc(db, "pengeluaran", "Gosen", "transaksi", id));
             alert("Pengeluaran berhasil dihapus.");
+            location.reload();
         } catch (err) {
             console.error(err);
             alert("Gagal menghapus pengeluaran!");
@@ -817,13 +866,13 @@ window.deleteExpense = async (id) => {
     }
 };
 
-// Fungsi Hapus Pemasukan
 window.deleteIncome = async (id) => {
     let pin = prompt("Masukkan PIN:");
-    if (pin === "1234") {
+    if (pin === "2000") {
         try {
             await deleteDoc(doc(db, "pemasukan", "Gosen", "transaksi", id));
             alert("Pemasukan berhasil dihapus.");
+            location.reload();
         } catch (err) {
             console.error(err);
             alert("Gagal menghapus pemasukan!");
@@ -833,16 +882,15 @@ window.deleteIncome = async (id) => {
     }
 };
 
-// Fungsi Edit Data (Contoh untuk Pengeluaran)
 window.editExpense = async (id) => {
     let pin = prompt("Masukkan PIN:");
-    if (pin === "1234") {
+    if (pin === "2000") {
         alert("Akses diterima. Silakan edit data.");
-        // Tambahkan logika untuk membuka modal atau form edit di sini
     } else {
         alert("PIN salah. Edit dibatalkan.");
     }
 };
+
 
 
         // Tanggal default hari ini
