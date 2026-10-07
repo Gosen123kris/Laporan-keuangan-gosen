@@ -802,11 +802,19 @@
 
         // Fungsi Hapus
         window.deleteExpense = async (id) => {
-            try {
-                await deleteDoc(doc(db, 'pengeluaran', 'Gosen', 'transaksi', id));
-            } catch (err) {
-                alert("Gagal menghapus pengeluaran!");
-            }
+  let pin = prompt("Masukkan PIN:");
+  if (pin === "1234") {
+    alert("Akses diterima.");
+    try {
+      await deleteDoc(doc(db, "pengeluaran", "Gosen", "transaksi", id));
+      alert("Pengeluaran berhasil dihapus.");
+    } catch (err) {
+      alert("Gagal menghapus pengeluaran!");
+    }
+  } else {
+    alert("PIN salah. Penghapusan dibatalkan.");
+  }
+};
         };
 
         window.deleteIncome = async (id) => {
