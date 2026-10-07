@@ -548,6 +548,20 @@
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
         };
 
+        const verifyPin = () => {
+            if (!savedPin) {
+                alert("PIN belum dibuat!");
+                return false;
+            }
+            const inputPin = prompt("Masukkan PIN Anda:");
+            if (inputPin === savedPin) {
+                return true;
+            } else {
+                alert("PIN salah. Akses ditolak.");
+                return false;
+            }
+        };
+
         const updateUI = () => {
             // Render Tabel Pengeluaran
             const tbodyExpense = document.getElementById('expenseTableBody');
@@ -672,14 +686,16 @@
         });
 
         document.getElementById('resetPinBtn').addEventListener('click', async () => {
-            if(confirm("Hapus PIN lama dan buat PIN baru?")) {
-                try {
-                    await setDoc(gosenDocRef, { pin: null }, { merge: true });
-                    savedPin = null;
-                    pinInput.value = '';
-                    initAuth();
-                } catch (err) {
-                    alert("Gagal mereset PIN!");
+            if (verifyPin()) {
+                if(confirm("Hapus PIN lama dan buat PIN baru?")) {
+                    try {
+                        await setDoc(gosenDocRef, { pin: null }, { merge: true });
+                        savedPin = null;
+                        pinInput.value = '';
+                        initAuth();
+                    } catch (err) {
+                        alert("Gagal mereset PIN!");
+                    }
                 }
             }
         });
@@ -690,14 +706,29 @@
             pinInput.value = '';
         });
 
-        // Simpan Anggaran
+        // Simpan Anggaran & Otomatis Tambah ke Riwayat Pemasukan
         document.getElementById('budgetForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const newBudget = parseFloat(document.getElementById('budgetInput').value) || 0;
+
+            if (!verifyPin()) return;
+
             try {
+                const todayStr = new Date().toISOString().split('T')[0];
+                
                 await setDoc(gosenDocRef, { budget: newBudget }, { merge: true });
+                
+                await addDoc(incomesColRef, {
+                    amount: newBudget,
+                    description: "Anggaran Awal",
+                    date: todayStr,
+                    createdAt: new Date()
+                });
+
                 document.getElementById('budgetInput').value = '';
+                alert("Anggaran berhasil disimpan dan dicatat ke riwayat pemasukan.");
             } catch (err) {
+                console.error(err);
                 alert("Gagal menyimpan anggaran!");
             }
         });
@@ -710,6 +741,7 @@
             const date = document.getElementById('incomeDate').value;
 
             if (!amount || !description || !date) return;
+            if (!verifyPin()) return;
 
             try {
                 await addDoc(incomesColRef, {
@@ -721,7 +753,9 @@
 
                 document.getElementById('incomeAmount').value = '';
                 document.getElementById('incomeDescription').value = '';
+                alert("Pemasukan berhasil ditambahkan.");
             } catch (err) {
+                console.error(err);
                 alert("Gagal menambah pemasukan!");
             }
         });
@@ -734,7 +768,6 @@
             },
             (error, result) => {
                 if (!error && result && result.event === 'success') {
-                    console.log('Done! Here is the image info: ', result.info.secure_url);
                     currentBillUrl = result.info.secure_url;
                     const uploadBtn = document.getElementById('uploadBtn');
                     if (uploadBtn) {
@@ -766,6 +799,7 @@
             const submitBtn = document.getElementById('submitBtn');
 
             if (!amount || !description || !date || !category) return;
+            if (!verifyPin()) return;
 
             submitBtn.disabled = true;
             submitBtn.innerText = "Menyimpan...";
@@ -792,6 +826,7 @@
 
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Catat Pengeluaran";
+                alert("Pengeluaran berhasil ditambahkan.");
             } catch (err) {
                 console.error(err);
                 alert("Gagal menambah pengeluaran!");
@@ -800,106 +835,28 @@
             }
         });
 
-        // Fungsi Hapus
-        // Fungsi Hapus Pengeluaran
-window.addIncome = async (data) => {
-    let pin = prompt("Masukkan PIN:");
-    if (pin === "2000") {
-        try {
-            await addDoc(collection(db, "pemasukan", "Gosen", "transaksi"), data);
-            alert("Pemasukan berhasil ditambahkan.");
-            location.reload();
-        } catch (err) {
-            console.error(err);
-            alert("Gagal menambahkan pemasukan!");
-        }
-    } else {
-        alert("PIN salah. Penambahan dibatalkan.");
-    }
-};
+        // Global Delete Functions
+        window.deleteExpense = async (id) => {
+            if (!verifyPin()) return;
+            try {
+                await deleteDoc(doc(db, 'pengeluaran', 'Gosen', 'transaksi', id));
+                alert("Pengeluaran berhasil dihapus.");
+            } catch (err) {
+                console.error(err);
+                alert("Gagal menghapus pengeluaran!");
+            }
+        };
 
-window.addExpense = async (data) => {
-    let pin = prompt("Masukkan PIN:");
-    if (pin === "2000") {
-        try {
-            await addDoc(collection(db, "pengeluaran", "Gosen", "transaksi"), data);
-            alert("Pengeluaran berhasil ditambahkan.");
-            location.reload();
-        } catch (err) {
-            console.error(err);
-            alert("Gagal menambahkan pengeluaran!");
-        }
-    } else {
-        alert("PIN salah. Penambahan dibatalkan.");
-    }
-};
-
-window.setInitialBudget = async (amount) => {
-    let pin = prompt("Masukkan PIN:");
-    if (pin === "2000") {
-        try {
-            await setDoc(doc(db, "anggaran", "Gosen"), { total: amount });
-            alert("Anggaran berhasil diperbarui.");
-            location.reload();
-        } catch (err) {
-            console.error(err);
-            alert("Gagal memperbarui anggaran!");
-        }
-    } else {
-        alert("PIN salah. Pengaturan dibatalkan.");
-    }
-};
-
-window.deleteExpense = async (id) => {
-    let pin = prompt("Masukkan PIN:");
-    if (pin === "2000") {
-        try {
-            await deleteDoc(doc(db, "pengeluaran", "Gosen", "transaksi", id));
-            alert("Pengeluaran berhasil dihapus.");
-            location.reload();
-        } catch (err) {
-            console.error(err);
-            alert("Gagal menghapus pengeluaran!");
-        }
-    } else {
-        alert("PIN salah. Penghapusan dibatalkan.");
-    }
-};
-        window.editExpense = async (id) => {
-    let pin = prompt("Masukkan PIN:");
-    if (pin === "2000") {
-        alert("Akses diterima. Silakan edit data.");
-    } else {
-        alert("PIN salah. Edit dibatalkan.");
-    }
-};
-
-window.deleteIncome = async (id) => {
-    let pin = prompt("Masukkan PIN:");
-    if (pin === "2000") {
-        try {
-            await deleteDoc(doc(db, "pemasukan", "Gosen", "transaksi", id));
-            alert("Pemasukan berhasil dihapus.");
-            location.reload();
-        } catch (err) {
-            console.error(err);
-            alert("Gagal menghapus pemasukan!");
-        }
-    } else {
-        alert("PIN salah. Penghapusan dibatalkan.");
-    }
-};
-
-window.editExpense = async (id) => {
-    let pin = prompt("Masukkan PIN:");
-    if (pin === "2000") {
-        alert("Akses diterima. Silakan edit data.");
-    } else {
-        alert("PIN salah. Edit dibatalkan.");
-    }
-};
-
-
+        window.deleteIncome = async (id) => {
+            if (!verifyPin()) return;
+            try {
+                await deleteDoc(doc(db, 'pengeluaran', 'Gosen', 'pemasukan', id));
+                alert("Pemasukan berhasil dihapus.");
+            } catch (err) {
+                console.error(err);
+                alert("Gagal menghapus pemasukan!");
+            }
+        };
 
         // Tanggal default hari ini
         document.getElementById('date').valueAsDate = new Date();
