@@ -530,6 +530,7 @@
         const db = getFirestore(app);
 
         let savedPin = null;
+        let editPin = "2026"; // Contoh PIN khusus Edit
         let expenses = [];
         let incomes = [];
         let budget = 0;
@@ -562,6 +563,16 @@
             }
         };
 
+        const verifyEditPin = () => {
+            const inputPin = prompt("Konfirmasi PIN Khusus Edit:");
+            if (inputPin === editPin) {
+                return true;
+            } else {
+                alert("PIN Salah! Akses edit ditolak.");
+                return false;
+            }
+        };
+
         const updateUI = () => {
             // Render Tabel Pengeluaran
             const tbodyExpense = document.getElementById('expenseTableBody');
@@ -583,7 +594,7 @@
                         <button onclick="deleteExpense('${item.id}')" class="btn-del">Hapus</button>
                     </td>
                 `;
-                tbodyExpense.appendChild(tr);
+                expenseTableBody.appendChild(tr);
             });
 
             // Render Tabel Pemasukan
@@ -600,7 +611,7 @@
                         <button onclick="deleteIncome('${item.id}')" class="btn-del">Hapus</button>
                     </td>
                 `;
-                tbodyIncome.appendChild(tr);
+                incomeTableBody.appendChild(tr);
             });
 
             // Kalkulasi Total
@@ -715,9 +726,7 @@
 
             try {
                 const todayStr = new Date().toISOString().split('T')[0];
-                
                 await setDoc(gosenDocRef, { budget: newBudget }, { merge: true });
-                
                 await addDoc(incomesColRef, {
                     amount: newBudget,
                     description: "Anggaran Awal",
@@ -772,7 +781,6 @@
                     const uploadBtn = document.getElementById('uploadBtn');
                     if (uploadBtn) {
                         uploadBtn.innerText = "✓ Bukti Terunggah";
-                        uploadBtn.style.borderColor = "#34d399";
                         uploadBtn.style.color = "#34d399";
                     }
                     alert("Foto bukti berhasil diunggah!");
@@ -835,7 +843,7 @@
             }
         });
 
-        // Global Delete Functions
+        // Fungsi Hapus Global
         window.deleteExpense = async (id) => {
             if (!verifyPin()) return;
             try {
@@ -856,6 +864,12 @@
                 console.error(err);
                 alert("Gagal menghapus pemasukan!");
             }
+        };
+
+        // Fungsi Edit Global
+        window.editExpense = async (id) => {
+            if (!verifyEditPin()) return;
+            alert("Akses diterima. Silakan edit data.");
         };
 
         // Tanggal default hari ini
