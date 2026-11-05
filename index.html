@@ -529,8 +529,8 @@
         const analytics = getAnalytics(app);
         const db = getFirestore(app);
 
-        let savedPin = "2006"; // PIN Utama untuk Buka Aplikasi (Login)
-        let editPin = "2000";  // PIN untuk Tambah/Edit/Hapus Data
+        let savedPin = "2006";
+        let editPin = "2000";
 
         let expenses = [];
         let incomes = [];
@@ -550,7 +550,17 @@
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
         };
 
-        // Verifikasi PIN Utama (2006)
+        // Fungsi menyimpan data cadangan lokal
+        const saveToLocalStorage = () => {
+            try {
+                localStorage.setItem('gosen_budget', JSON.stringify(budget));
+                localStorage.setItem('gosen_incomes', JSON.stringify(incomes));
+                localStorage.setItem('gosen_expenses', JSON.stringify(expenses));
+            } catch (err) {
+                console.warn("Gagal menyimpan ke LocalStorage:", err);
+            }
+        };
+
         const verifyPin = () => {
             const inputPin = prompt("Masukkan PIN Utama Anda:");
             if (inputPin === savedPin) {
@@ -561,7 +571,6 @@
             }
         };
 
-        // Verifikasi PIN Operasional (2000) untuk Tambah, Edit & Hapus
         const verifyEditPin = () => {
             const inputPin = prompt("Masukkan PIN Operasional (Tambah/Edit/Hapus):");
             if (inputPin === editPin) {
@@ -573,6 +582,8 @@
         };
 
         const updateUI = () => {
+            saveToLocalStorage();
+
             // Render Tabel Pengeluaran
             const tbodyExpense = document.getElementById('expenseTableBody');
             tbodyExpense.innerHTML = '';
@@ -666,7 +677,7 @@
             updateUI();
         });
 
-        // Login PIN Akses Utama (2006)
+        // Login PIN Akses Utama
         pinForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const val = pinInput.value;
@@ -701,7 +712,7 @@
             pinInput.value = '';
         });
 
-        // Simpan Anggaran (Menggunakan PIN Operasional 2000)
+        // Simpan Anggaran
         document.getElementById('budgetForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const newBudget = parseFloat(document.getElementById('budgetInput').value) || 0;
@@ -726,7 +737,7 @@
             }
         });
 
-        // Tambah Pemasukan (Menggunakan PIN Operasional 2000)
+        // Tambah Pemasukan
         document.getElementById('incomeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('incomeAmount').value);
@@ -753,7 +764,7 @@
             }
         });
 
-        // Inisialisasi Cloudinary Widget
+        // Cloudinary Widget
         const myWidget = window.cloudinary.createUploadWidget(
             {
                 cloudName: 'cwg8z0zz',
@@ -772,7 +783,6 @@
             }
         );
 
-        // Listener Tombol Upload Bukti
         const uploadBtn = document.getElementById('uploadBtn');
         if (uploadBtn) {
             uploadBtn.addEventListener('click', (e) => {
@@ -781,7 +791,7 @@
             });
         }
 
-        // Tambah Pengeluaran (Menggunakan PIN Operasional 2000)
+        // Tambah Pengeluaran
         document.getElementById('expenseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('amount').value);
@@ -827,7 +837,7 @@
             }
         });
 
-        // Fungsi Hapus Global (Menggunakan PIN Operasional 2000)
+        // Fungsi Hapus Global
         window.deleteExpense = async (id) => {
             if (!verifyEditPin()) return;
             try {
@@ -848,12 +858,6 @@
                 console.error(err);
                 alert("Gagal menghapus pemasukan!");
             }
-        };
-
-        // Fungsi Edit Global (Menggunakan PIN Operasional 2000)
-        window.editExpense = async (id) => {
-            if (!verifyEditPin()) return;
-            alert("Akses diterima. Silakan edit data.");
         };
 
         // Tanggal default hari ini
