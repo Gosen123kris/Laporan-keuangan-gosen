@@ -334,6 +334,25 @@
             background: #334155;
             color: #fff;
         }
+
+        .month-header {
+            font-size: 15px;
+            color: #cbd5e1;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px dashed #334155;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .month-group {
+            margin-bottom: 24px;
+        }
+
+        .month-group:last-child {
+            margin-bottom: 0;
+        }
     </style>
 </head>
 <body>
@@ -475,24 +494,11 @@
                         </div>
                     </div>
 
-                    <!-- Tabel Pengeluaran -->
+                    <!-- Tabel Pengeluaran Per Bulan -->
                     <div class="table-card">
                         <h3 style="font-size: 16px; margin-bottom: 16px; color: #cbd5e1;">📋 Riwayat Pengeluaran</h3>
-                        <div class="table-wrapper">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Tanggal</th>
-                                        <th>Keterangan</th>
-                                        <th>Kategori</th>
-                                        <th>Bukti</th>
-                                        <th style="text-align: right;">Jumlah</th>
-                                        <th style="text-align: center;">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="expenseTableBody">
-                                </tbody>
-                            </table>
+                        <div id="expenseTablesContainer">
+                            <!-- Tabel per bulan akan di-render otomatis di sini -->
                         </div>
                     </div>
                 </div>
@@ -584,28 +590,85 @@
         const updateUI = () => {
             saveToLocalStorage();
 
-            // Render Tabel Pengeluaran
-            const tbodyExpense = document.getElementById('expenseTableBody');
-            tbodyExpense.innerHTML = '';
+            // Render Tabel Pengeluaran Berdasarkan Bulan
+            const containerExpense = document.getElementById('expenseTablesContainer');
+            containerExpense.innerHTML = '';
 
-            expenses.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
-                const tr = document.createElement('tr');
-                const billHtml = item.billUrl 
-                    ? `<a href="${item.billUrl}" target="_blank" class="btn-bill">Lihat Bill</a>`
-                    : `<span style="color: #475569; font-size: 11px;">Tidak ada</span>`;
+            if (expenses.length === 0) {
+                containerExpense.innerHTML = '<p style="color:#94a3b8; font-size:13px; text-align:center; padding: 20px 0;">Belum ada catatan pengeluaran.</p>';
+            } else {
+                // Kelompokkan data pengeluaran per bulan (YYYY-MM)
+                const dikelompokkan = expenses.reduce((acc, item) => {
+                    const monthKey = item.date ? item.date.substring(0, 7) : 'Lainnya';
+                    if (!acc[monthKey]) acc[monthKey] = [];
+                    acc[monthKey].push(item);
+                    return acc;
+                }, {});
 
-                tr.innerHTML = `
-                    <td style="color:#94a3b8;">${item.date}</td>
-                    <td style="font-weight:600;">${item.description}</td>
-                    <td><span class="badge">${item.category}</span></td>
-                    <td>${billHtml}</td>
-                    <td style="text-align:right; color:#f43f5e; font-weight:bold;">${formatRupiah(item.amount)}</td>
-                    <td style="text-align:center;">
-                        <button onclick="deleteExpense('${item.id}')" class="btn-del">Hapus</button>
-                    </td>
-                `;
-                tbodyExpense.appendChild(tr);
-            });
+                // Urutkan bulan dari yang terbaru ke lama
+                const sortedMonths = Object.keys(dikelompokkan).sort().reverse();
+
+                sortedMonths.forEach(monthKey => {
+                    let namaBulan = monthKey;
+                    if (monthKey !== 'Lainnya') {
+                        const [tahun, bulan] = monthKey.split('-');
+                        namaBulan = new Date(tahun, bulan - 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+                    }
+
+                    const monthGroupDiv = document.createElement('div');
+                    monthGroupDiv.className = 'month-group';
+
+                    // Sub-header per bulan
+                    const headerH4 = document.createElement('h4');
+                    headerH4.className = 'month-header';
+                    headerH4.innerHTML = `📅 Pengeluaran ${namaBulan}`;
+                    monthGroupDiv.appendChild(headerH4);
+
+                    const tableWrapper = document.createElement('div');
+                    tableWrapper.className = 'table-wrapper';
+
+                    const table = document.createElement('table');
+                    table.innerHTML = `
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Keterangan</th>
+                                <th>Kategori</th>
+                                <th>Bukti</th>
+                                <th style="text-align: right;">Jumlah</th>
+                                <th style="text-align: center;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    `;
+
+                    const tbody = table.querySelector('tbody');
+
+                    // Sort transaksi di bulan tersebut secara descending tanggal
+                    dikelompokkan[monthKey].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
+                        const tr = document.createElement('tr');
+                        const billHtml = item.billUrl 
+                            ? `<a href="${item.billUrl}" target="_blank" class="btn-bill">Lihat Bill</a>`
+                            : `<span style="color: #475569; font-size: 11px;">Tidak ada</span>`;
+
+                        tr.innerHTML = `
+                            <td style="color:#94a3b8;">${item.date}</td>
+                            <td style="font-weight:600;">${item.description}</td>
+                            <td><span class="badge">${item.category}</span></td>
+                            <td>${billHtml}</td>
+                            <td style="text-align:right; color:#f43f5e; font-weight:bold;">${formatRupiah(item.amount)}</td>
+                            <td style="text-align:center;">
+                                <button onclick="deleteExpense('${item.id}')" class="btn-del">Hapus</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+
+                    tableWrapper.appendChild(table);
+                    monthGroupDiv.appendChild(tableWrapper);
+                    containerExpense.appendChild(monthGroupDiv);
+                });
+            }
 
             // Render Tabel Pemasukan
             const tbodyIncome = document.getElementById('incomeTableBody');
