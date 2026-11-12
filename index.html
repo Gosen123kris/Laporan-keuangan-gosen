@@ -135,6 +135,16 @@
             padding: 0 16px;
         }
 
+        .summary-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .cards-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -381,24 +391,17 @@
         </header>
 
         <div class="container">
-            <!-- CARDS RINGKASAN -->
-            <div class="cards-grid">
+            <!-- ANGGARAN AWAL -->
+            <div class="cards-grid" style="margin-bottom: 16px;">
                 <div class="card">
                     <div class="card-title">Anggaran Awal</div>
                     <div id="displayBudget" class="card-value val-budget">Rp 0</div>
                 </div>
-                <div class="card">
-                    <div class="card-title">Total Pemasukan</div>
-                    <div id="totalIncome" class="card-value val-income">Rp 0</div>
-                </div>
-                <div class="card">
-                    <div class="card-title">Total Pengeluaran</div>
-                    <div id="totalExpense" class="card-value val-expense">Rp 0</div>
-                </div>
-                <div class="card">
-                    <div class="card-title">Sisa Saldo</div>
-                    <div id="remainingBalance" class="card-value val-balance">Rp 0</div>
-                </div>
+            </div>
+
+            <!-- CARDS RINGKASAN PER BULAN -->
+            <div id="monthlySummaryContainer">
+                <!-- Ringkasan per bulan (Pemasukan, Pengeluaran, Sisa Saldo) akan dirender di sini -->
             </div>
 
             <div class="main-grid">
@@ -475,22 +478,11 @@
 
                 <!-- TABEL KANAN -->
                 <div>
-                    <!-- Tabel Pemasukan -->
+                    <!-- Tabel Pemasukan Per Bulan -->
                     <div class="table-card">
                         <h3 style="font-size: 16px; margin-bottom: 16px; color: #34d399;">💚 Riwayat Pemasukan</h3>
-                        <div class="table-wrapper">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Tanggal</th>
-                                        <th>Keterangan</th>
-                                        <th style="text-align: right;">Jumlah</th>
-                                        <th style="text-align: center;">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="incomeTableBody">
-                                </tbody>
-                            </table>
+                        <div id="incomeTablesContainer">
+                            <!-- Tabel pemasukan per bulan akan di-render otomatis di sini -->
                         </div>
                     </div>
 
@@ -498,7 +490,7 @@
                     <div class="table-card">
                         <h3 style="font-size: 16px; margin-bottom: 16px; color: #cbd5e1;">📋 Riwayat Pengeluaran</h3>
                         <div id="expenseTablesContainer">
-                            <!-- Tabel per bulan akan di-render otomatis di sini -->
+                            <!-- Tabel pengeluaran per bulan akan di-render otomatis di sini -->
                         </div>
                     </div>
                 </div>
@@ -556,6 +548,12 @@
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
         };
 
+        const formatMonthName = (monthKey) => {
+            if (monthKey === 'Lainnya') return 'Lainnya';
+            const [tahun, bulan] = monthKey.split('-');
+            return new Date(tahun, bulan - 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+        };
+
         // Fungsi menyimpan data cadangan lokal
         const saveToLocalStorage = () => {
             try {
@@ -589,36 +587,152 @@
 
         const updateUI = () => {
             saveToLocalStorage();
+            document.getElementById('displayBudget').innerText = formatRupiah(budget);
 
-            // Render Tabel Pengeluaran Berdasarkan Bulan
+            // Kelompokkan data pemasukan per bulan (YYYY-MM)
+            const incByMonth = incomes.reduce((acc, item) => {
+                const monthKey = item.date ? item.date.substring(0, 7) : 'Lainnya';
+                if (!acc[monthKey]) acc[monthKey] = [];
+                acc[monthKey].push(item);
+                return acc;
+            }, {});
+
+            // Kelompokkan data pengeluaran per bulan (YYYY-MM)
+            const expByMonth = expenses.reduce((acc, item) => {
+                const monthKey = item.date ? item.date.substring(0, 7) : 'Lainnya';
+                if (!acc[monthKey]) acc[monthKey] = [];
+                acc[monthKey].push(item);
+                return acc;
+            }, {});
+
+            // Gabungkan semua kunci bulan dari pemasukan dan pengeluaran, urutkan dari terbaru
+            const allMonths = Array.from(new Set([...Object.keys(incByMonth), ...Object.keys(expByMonth)])).sort().reverse();
+
+            // 1. RENDER RINGKASAN SALDO PER BULAN
+            const summaryContainer = document.getElementById('monthlySummaryContainer');
+            summaryContainer.innerHTML = '';
+
+            if (allMonths.length === 0) {
+                summaryContainer.innerHTML = `
+                    <div class="cards-grid">
+                        <div class="card">
+                            <div class="card-title">Total Pemasukan</div>
+                            <div class="card-value val-income">Rp 0</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-title">Total Pengeluaran</div>
+                            <div class="card-value val-expense">Rp 0</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-title">Sisa Saldo</div>
+                            <div class="card-value val-balance">Rp 0</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                allMonths.forEach(monthKey => {
+                    const namaBulan = formatMonthName(monthKey);
+                    const monthIncomes = incByMonth[monthKey] || [];
+                    const monthExpenses = expByMonth[monthKey] || [];
+
+                    const totalInc = monthIncomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
+                    const totalExp = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+                    const balance = totalInc - totalExp;
+                    const balColor = balance < 0 ? '#f43f5e' : '#10b981';
+
+                    const sectionDiv = document.createElement('div');
+                    sectionDiv.innerHTML = `
+                        <div class="summary-section-title">📊 Ringkasan ${namaBulan}</div>
+                        <div class="cards-grid">
+                            <div class="card">
+                                <div class="card-title">Total Pemasukan (${namaBulan})</div>
+                                <div class="card-value val-income">${formatRupiah(totalInc)}</div>
+                            </div>
+                            <div class="card">
+                                <div class="card-title">Total Pengeluaran (${namaBulan})</div>
+                                <div class="card-value val-expense">${formatRupiah(totalExp)}</div>
+                            </div>
+                            <div class="card">
+                                <div class="card-title">Sisa Saldo (${namaBulan})</div>
+                                <div class="card-value val-balance" style="color: ${balColor};">${formatRupiah(balance)}</div>
+                            </div>
+                        </div>
+                    `;
+                    summaryContainer.appendChild(sectionDiv);
+                });
+            }
+
+            // 2. RENDER TABEL PEMASUKAN PER BULAN
+            const containerIncome = document.getElementById('incomeTablesContainer');
+            containerIncome.innerHTML = '';
+
+            if (incomes.length === 0) {
+                containerIncome.innerHTML = '<p style="color:#94a3b8; font-size:13px; text-align:center; padding: 20px 0;">Belum ada catatan pemasukan.</p>';
+            } else {
+                const sortedIncMonths = Object.keys(incByMonth).sort().reverse();
+
+                sortedIncMonths.forEach(monthKey => {
+                    const namaBulan = formatMonthName(monthKey);
+                    const monthGroupDiv = document.createElement('div');
+                    monthGroupDiv.className = 'month-group';
+
+                    const headerH4 = document.createElement('h4');
+                    headerH4.className = 'month-header';
+                    headerH4.style.color = '#34d399';
+                    headerH4.innerHTML = `📅 Pemasukan ${namaBulan}`;
+                    monthGroupDiv.appendChild(headerH4);
+
+                    const tableWrapper = document.createElement('div');
+                    tableWrapper.className = 'table-wrapper';
+
+                    const table = document.createElement('table');
+                    table.innerHTML = `
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Keterangan</th>
+                                <th style="text-align: right;">Jumlah</th>
+                                <th style="text-align: center;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    `;
+
+                    const tbody = table.querySelector('tbody');
+
+                    incByMonth[monthKey].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td style="color:#94a3b8;">${item.date}</td>
+                            <td style="font-weight:600;">${item.description}</td>
+                            <td style="text-align:right; color:#34d399; font-weight:bold;">${formatRupiah(item.amount)}</td>
+                            <td style="text-align:center;">
+                                <button onclick="deleteIncome('${item.id}')" class="btn-del">Hapus</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+
+                    tableWrapper.appendChild(table);
+                    monthGroupDiv.appendChild(tableWrapper);
+                    containerIncome.appendChild(monthGroupDiv);
+                });
+            }
+
+            // 3. RENDER TABEL PENGELUARAN PER BULAN
             const containerExpense = document.getElementById('expenseTablesContainer');
             containerExpense.innerHTML = '';
 
             if (expenses.length === 0) {
                 containerExpense.innerHTML = '<p style="color:#94a3b8; font-size:13px; text-align:center; padding: 20px 0;">Belum ada catatan pengeluaran.</p>';
             } else {
-                // Kelompokkan data pengeluaran per bulan (YYYY-MM)
-                const dikelompokkan = expenses.reduce((acc, item) => {
-                    const monthKey = item.date ? item.date.substring(0, 7) : 'Lainnya';
-                    if (!acc[monthKey]) acc[monthKey] = [];
-                    acc[monthKey].push(item);
-                    return acc;
-                }, {});
+                const sortedExpMonths = Object.keys(expByMonth).sort().reverse();
 
-                // Urutkan bulan dari yang terbaru ke lama
-                const sortedMonths = Object.keys(dikelompokkan).sort().reverse();
-
-                sortedMonths.forEach(monthKey => {
-                    let namaBulan = monthKey;
-                    if (monthKey !== 'Lainnya') {
-                        const [tahun, bulan] = monthKey.split('-');
-                        namaBulan = new Date(tahun, bulan - 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
-                    }
-
+                sortedExpMonths.forEach(monthKey => {
+                    const namaBulan = formatMonthName(monthKey);
                     const monthGroupDiv = document.createElement('div');
                     monthGroupDiv.className = 'month-group';
 
-                    // Sub-header per bulan
                     const headerH4 = document.createElement('h4');
                     headerH4.className = 'month-header';
                     headerH4.innerHTML = `📅 Pengeluaran ${namaBulan}`;
@@ -644,8 +758,7 @@
 
                     const tbody = table.querySelector('tbody');
 
-                    // Sort transaksi di bulan tersebut secara descending tanggal
-                    dikelompokkan[monthKey].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
+                    expByMonth[monthKey].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
                         const tr = document.createElement('tr');
                         const billHtml = item.billUrl 
                             ? `<a href="${item.billUrl}" target="_blank" class="btn-bill">Lihat Bill</a>`
@@ -668,40 +781,6 @@
                     monthGroupDiv.appendChild(tableWrapper);
                     containerExpense.appendChild(monthGroupDiv);
                 });
-            }
-
-            // Render Tabel Pemasukan
-            const tbodyIncome = document.getElementById('incomeTableBody');
-            tbodyIncome.innerHTML = '';
-
-            incomes.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="color:#94a3b8;">${item.date}</td>
-                    <td style="font-weight:600;">${item.description}</td>
-                    <td style="text-align:right; color:#34d399; font-weight:bold;">${formatRupiah(item.amount)}</td>
-                    <td style="text-align:center;">
-                        <button onclick="deleteIncome('${item.id}')" class="btn-del">Hapus</button>
-                    </td>
-                `;
-                tbodyIncome.appendChild(tr);
-            });
-
-            // Kalkulasi Total
-            const totalExp = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
-            const totalInc = incomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
-            const balance = (budget + totalInc) - totalExp;
-
-            document.getElementById('displayBudget').innerText = formatRupiah(budget);
-            document.getElementById('totalIncome').innerText = formatRupiah(totalInc);
-            document.getElementById('totalExpense').innerText = formatRupiah(totalExp);
-            
-            const balEl = document.getElementById('remainingBalance');
-            balEl.innerText = formatRupiah(balance);
-            if (balance < 0) {
-                balEl.style.color = '#f43f5e';
-            } else {
-                balEl.style.color = '#10b981';
             }
         };
 
