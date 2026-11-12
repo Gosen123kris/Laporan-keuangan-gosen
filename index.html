@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Keuangan GOSEN</title>
-    <!-- Cloudinary Widget Script -->
     <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
     <style>
         * {
@@ -136,13 +135,14 @@
         }
 
         .summary-section-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #cbd5e1;
-            margin-bottom: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #38bdf8;
+            margin: 24px 0 12px 0;
             display: flex;
             align-items: center;
             gap: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
         .cards-grid {
@@ -173,7 +173,6 @@
             font-weight: bold;
         }
 
-        .val-budget { color: #38bdf8; }
         .val-income { color: #34d399; }
         .val-expense { color: #f43f5e; }
         .val-balance { color: #10b981; }
@@ -311,11 +310,6 @@
             color: #38bdf8;
         }
 
-        .badge-income {
-            background: #064e3b;
-            color: #34d399;
-        }
-
         .btn-del {
             background: rgba(244, 63, 94, 0.2);
             color: #f43f5e;
@@ -391,34 +385,12 @@
         </header>
 
         <div class="container">
-            <!-- ANGGARAN AWAL -->
-            <div class="cards-grid" style="margin-bottom: 16px;">
-                <div class="card">
-                    <div class="card-title">Anggaran Awal</div>
-                    <div id="displayBudget" class="card-value val-budget">Rp 0</div>
-                </div>
-            </div>
-
-            <!-- CARDS RINGKASAN PER BULAN -->
-            <div id="monthlySummaryContainer">
-                <!-- Ringkasan per bulan (Pemasukan, Pengeluaran, Sisa Saldo) akan dirender di sini -->
-            </div>
+            <!-- CARDS RINGKASAN AKUMULATIF PER BULAN -->
+            <div id="monthlySummaryContainer"></div>
 
             <div class="main-grid">
                 <!-- FORM KIRI -->
                 <div>
-                    <!-- Form Anggaran -->
-                    <div class="form-card">
-                        <h3>💰 Setel Anggaran Awal</h3>
-                        <form id="budgetForm">
-                            <div class="form-group">
-                                <label>Total Saldo (Rp)</label>
-                                <input type="number" id="budgetInput" class="form-control" placeholder="Contoh: 2000000" required>
-                            </div>
-                            <button type="submit" class="btn-sub" style="background: #0284c7;">Simpan Anggaran</button>
-                        </form>
-                    </div>
-
                     <!-- Form Pemasukan -->
                     <div class="form-card">
                         <h3>💵 Tambah Pemasukan</h3>
@@ -478,20 +450,16 @@
 
                 <!-- TABEL KANAN -->
                 <div>
-                    <!-- Tabel Pemasukan Per Bulan -->
+                    <!-- Tabel Pemasukan -->
                     <div class="table-card">
                         <h3 style="font-size: 16px; margin-bottom: 16px; color: #34d399;">💚 Riwayat Pemasukan</h3>
-                        <div id="incomeTablesContainer">
-                            <!-- Tabel pemasukan per bulan akan di-render otomatis di sini -->
-                        </div>
+                        <div id="incomeTablesContainer"></div>
                     </div>
 
-                    <!-- Tabel Pengeluaran Per Bulan -->
+                    <!-- Tabel Pengeluaran -->
                     <div class="table-card">
                         <h3 style="font-size: 16px; margin-bottom: 16px; color: #cbd5e1;">📋 Riwayat Pengeluaran</h3>
-                        <div id="expenseTablesContainer">
-                            <!-- Tabel pengeluaran per bulan akan di-render otomatis di sini -->
-                        </div>
+                        <div id="expenseTablesContainer"></div>
                     </div>
                 </div>
 
@@ -532,7 +500,6 @@
 
         let expenses = [];
         let incomes = [];
-        let budget = 0;
         let currentBillUrl = null;
 
         const authOverlay = document.getElementById('authOverlay');
@@ -554,10 +521,8 @@
             return new Date(tahun, bulan - 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
         };
 
-        // Fungsi menyimpan data cadangan lokal
         const saveToLocalStorage = () => {
             try {
-                localStorage.setItem('gosen_budget', JSON.stringify(budget));
                 localStorage.setItem('gosen_incomes', JSON.stringify(incomes));
                 localStorage.setItem('gosen_expenses', JSON.stringify(expenses));
             } catch (err) {
@@ -567,29 +532,21 @@
 
         const verifyPin = () => {
             const inputPin = prompt("Masukkan PIN Utama Anda:");
-            if (inputPin === savedPin) {
-                return true;
-            } else {
-                alert("PIN Utama salah. Akses ditolak.");
-                return false;
-            }
+            if (inputPin === savedPin) return true;
+            alert("PIN Utama salah. Akses ditolak.");
+            return false;
         };
 
         const verifyEditPin = () => {
             const inputPin = prompt("Masukkan PIN Operasional (Tambah/Edit/Hapus):");
-            if (inputPin === editPin) {
-                return true;
-            } else {
-                alert("PIN Salah! Akses ditolak.");
-                return false;
-            }
+            if (inputPin === editPin) return true;
+            alert("PIN Salah! Akses ditolak.");
+            return false;
         };
 
         const updateUI = () => {
             saveToLocalStorage();
-            document.getElementById('displayBudget').innerText = formatRupiah(budget);
 
-            // Kelompokkan data pemasukan per bulan (YYYY-MM)
             const incByMonth = incomes.reduce((acc, item) => {
                 const monthKey = item.date ? item.date.substring(0, 7) : 'Lainnya';
                 if (!acc[monthKey]) acc[monthKey] = [];
@@ -597,7 +554,6 @@
                 return acc;
             }, {});
 
-            // Kelompokkan data pengeluaran per bulan (YYYY-MM)
             const expByMonth = expenses.reduce((acc, item) => {
                 const monthKey = item.date ? item.date.substring(0, 7) : 'Lainnya';
                 if (!acc[monthKey]) acc[monthKey] = [];
@@ -605,14 +561,16 @@
                 return acc;
             }, {});
 
-            // Gabungkan semua kunci bulan dari pemasukan dan pengeluaran, urutkan dari terbaru
-            const allMonths = Array.from(new Set([...Object.keys(incByMonth), ...Object.keys(expByMonth)])).sort().reverse();
+            const uniqueMonths = Array.from(new Set([...Object.keys(incByMonth), ...Object.keys(expByMonth)])).sort();
 
-            // 1. RENDER RINGKASAN SALDO PER BULAN
+            // 1. RENDER RINGKASAN AKUMULATIF PER BULAN
             const summaryContainer = document.getElementById('monthlySummaryContainer');
             summaryContainer.innerHTML = '';
 
-            if (allMonths.length === 0) {
+            let runningIncome = 0;
+            let runningExpense = 0;
+
+            if (uniqueMonths.length === 0) {
                 summaryContainer.innerHTML = `
                     <div class="cards-grid">
                         <div class="card">
@@ -624,97 +582,83 @@
                             <div class="card-value val-expense">Rp 0</div>
                         </div>
                         <div class="card">
-                            <div class="card-title">Sisa Saldo</div>
+                            <div class="card-title">Sisa Saldo Akumulatif</div>
                             <div class="card-value val-balance">Rp 0</div>
                         </div>
                     </div>
                 `;
             } else {
-                allMonths.forEach(monthKey => {
+                const summarySections = [];
+
+                uniqueMonths.forEach(monthKey => {
                     const namaBulan = formatMonthName(monthKey);
                     const monthIncomes = incByMonth[monthKey] || [];
                     const monthExpenses = expByMonth[monthKey] || [];
 
-                    const totalInc = monthIncomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
-                    const totalExp = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
-                    const balance = totalInc - totalExp;
-                    const balColor = balance < 0 ? '#f43f5e' : '#10b981';
+                    const monthlyInc = monthIncomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
+                    const monthlyExp = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+
+                    runningIncome += monthlyInc;
+                    runningExpense += monthlyExp;
+                    const runningBalance = runningIncome - runningExpense;
+                    const balColor = runningBalance < 0 ? '#f43f5e' : '#10b981';
 
                     const sectionDiv = document.createElement('div');
                     sectionDiv.innerHTML = `
-                        <div class="summary-section-title">📊 Ringkasan ${namaBulan}</div>
+                        <div class="summary-section-title">📊 Saldo Akumulatif s/d ${namaBulan}</div>
                         <div class="cards-grid">
                             <div class="card">
-                                <div class="card-title">Total Pemasukan (${namaBulan})</div>
-                                <div class="card-value val-income">${formatRupiah(totalInc)}</div>
+                                <div class="card-title">Total Pemasukan (s/d ${namaBulan})</div>
+                                <div class="card-value val-income">${formatRupiah(runningIncome)}</div>
                             </div>
                             <div class="card">
-                                <div class="card-title">Total Pengeluaran (${namaBulan})</div>
-                                <div class="card-value val-expense">${formatRupiah(totalExp)}</div>
+                                <div class="card-title">Total Pengeluaran (s/d ${namaBulan})</div>
+                                <div class="card-value val-expense">${formatRupiah(runningExpense)}</div>
                             </div>
                             <div class="card">
-                                <div class="card-title">Sisa Saldo (${namaBulan})</div>
-                                <div class="card-value val-balance" style="color: ${balColor};">${formatRupiah(balance)}</div>
+                                <div class="card-title">Sisa Saldo Akumulatif</div>
+                                <div class="card-value val-balance" style="color: ${balColor};">${formatRupiah(runningBalance)}</div>
                             </div>
                         </div>
                     `;
-                    summaryContainer.appendChild(sectionDiv);
+                    summarySections.push(sectionDiv);
                 });
+
+                summarySections.reverse().forEach(sec => summaryContainer.appendChild(sec));
             }
 
             // 2. RENDER TABEL PEMASUKAN PER BULAN
             const containerIncome = document.getElementById('incomeTablesContainer');
             containerIncome.innerHTML = '';
-
             if (incomes.length === 0) {
                 containerIncome.innerHTML = '<p style="color:#94a3b8; font-size:13px; text-align:center; padding: 20px 0;">Belum ada catatan pemasukan.</p>';
             } else {
-                const sortedIncMonths = Object.keys(incByMonth).sort().reverse();
-
-                sortedIncMonths.forEach(monthKey => {
+                Object.keys(incByMonth).sort().reverse().forEach(monthKey => {
                     const namaBulan = formatMonthName(monthKey);
                     const monthGroupDiv = document.createElement('div');
                     monthGroupDiv.className = 'month-group';
-
-                    const headerH4 = document.createElement('h4');
-                    headerH4.className = 'month-header';
-                    headerH4.style.color = '#34d399';
-                    headerH4.innerHTML = `📅 Pemasukan ${namaBulan}`;
-                    monthGroupDiv.appendChild(headerH4);
-
-                    const tableWrapper = document.createElement('div');
-                    tableWrapper.className = 'table-wrapper';
-
-                    const table = document.createElement('table');
-                    table.innerHTML = `
-                        <thead>
-                            <tr>
-                                <th>Tanggal</th>
-                                <th>Keterangan</th>
-                                <th style="text-align: right;">Jumlah</th>
-                                <th style="text-align: center;">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
+                    monthGroupDiv.innerHTML = `
+                        <h4 class="month-header" style="color: #34d399;">📅 Pemasukan ${namaBulan}</h4>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr><th>Tanggal</th><th>Keterangan</th><th style="text-align: right;">Jumlah</th><th style="text-align: center;">Aksi</th></tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     `;
-
-                    const tbody = table.querySelector('tbody');
-
+                    const tbody = monthGroupDiv.querySelector('tbody');
                     incByMonth[monthKey].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td style="color:#94a3b8;">${item.date}</td>
-                            <td style="font-weight:600;">${item.description}</td>
-                            <td style="text-align:right; color:#34d399; font-weight:bold;">${formatRupiah(item.amount)}</td>
-                            <td style="text-align:center;">
-                                <button onclick="deleteIncome('${item.id}')" class="btn-del">Hapus</button>
-                            </td>
+                        tbody.innerHTML += `
+                            <tr>
+                                <td style="color:#94a3b8;">${item.date}</td>
+                                <td style="font-weight:600;">${item.description}</td>
+                                <td style="text-align:right; color:#34d399; font-weight:bold;">${formatRupiah(item.amount)}</td>
+                                <td style="text-align:center;"><button onclick="deleteIncome('${item.id}')" class="btn-del">Hapus</button></td>
+                            </tr>
                         `;
-                        tbody.appendChild(tr);
                     });
-
-                    tableWrapper.appendChild(table);
-                    monthGroupDiv.appendChild(tableWrapper);
                     containerIncome.appendChild(monthGroupDiv);
                 });
             }
@@ -722,63 +666,38 @@
             // 3. RENDER TABEL PENGELUARAN PER BULAN
             const containerExpense = document.getElementById('expenseTablesContainer');
             containerExpense.innerHTML = '';
-
             if (expenses.length === 0) {
                 containerExpense.innerHTML = '<p style="color:#94a3b8; font-size:13px; text-align:center; padding: 20px 0;">Belum ada catatan pengeluaran.</p>';
             } else {
-                const sortedExpMonths = Object.keys(expByMonth).sort().reverse();
-
-                sortedExpMonths.forEach(monthKey => {
+                Object.keys(expByMonth).sort().reverse().forEach(monthKey => {
                     const namaBulan = formatMonthName(monthKey);
                     const monthGroupDiv = document.createElement('div');
                     monthGroupDiv.className = 'month-group';
-
-                    const headerH4 = document.createElement('h4');
-                    headerH4.className = 'month-header';
-                    headerH4.innerHTML = `📅 Pengeluaran ${namaBulan}`;
-                    monthGroupDiv.appendChild(headerH4);
-
-                    const tableWrapper = document.createElement('div');
-                    tableWrapper.className = 'table-wrapper';
-
-                    const table = document.createElement('table');
-                    table.innerHTML = `
-                        <thead>
-                            <tr>
-                                <th>Tanggal</th>
-                                <th>Keterangan</th>
-                                <th>Kategori</th>
-                                <th>Bukti</th>
-                                <th style="text-align: right;">Jumlah</th>
-                                <th style="text-align: center;">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
+                    monthGroupDiv.innerHTML = `
+                        <h4 class="month-header">📅 Pengeluaran ${namaBulan}</h4>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Bukti</th><th style="text-align: right;">Jumlah</th><th style="text-align: center;">Aksi</th></tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     `;
-
-                    const tbody = table.querySelector('tbody');
-
+                    const tbody = monthGroupDiv.querySelector('tbody');
                     expByMonth[monthKey].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
-                        const tr = document.createElement('tr');
-                        const billHtml = item.billUrl 
-                            ? `<a href="${item.billUrl}" target="_blank" class="btn-bill">Lihat Bill</a>`
-                            : `<span style="color: #475569; font-size: 11px;">Tidak ada</span>`;
-
-                        tr.innerHTML = `
-                            <td style="color:#94a3b8;">${item.date}</td>
-                            <td style="font-weight:600;">${item.description}</td>
-                            <td><span class="badge">${item.category}</span></td>
-                            <td>${billHtml}</td>
-                            <td style="text-align:right; color:#f43f5e; font-weight:bold;">${formatRupiah(item.amount)}</td>
-                            <td style="text-align:center;">
-                                <button onclick="deleteExpense('${item.id}')" class="btn-del">Hapus</button>
-                            </td>
+                        const billHtml = item.billUrl ? `<a href="${item.billUrl}" target="_blank" class="btn-bill">Lihat Bill</a>` : `<span style="color: #475569; font-size: 11px;">Tidak ada</span>`;
+                        tbody.innerHTML += `
+                            <tr>
+                                <td style="color:#94a3b8;">${item.date}</td>
+                                <td style="font-weight:600;">${item.description}</td>
+                                <td><span class="badge">${item.category}</span></td>
+                                <td>${billHtml}</td>
+                                <td style="text-align:right; color:#f43f5e; font-weight:bold;">${formatRupiah(item.amount)}</td>
+                                <td style="text-align:center;"><button onclick="deleteExpense('${item.id}')" class="btn-del">Hapus</button></td>
+                            </tr>
                         `;
-                        tbody.appendChild(tr);
                     });
-
-                    tableWrapper.appendChild(table);
-                    monthGroupDiv.appendChild(tableWrapper);
                     containerExpense.appendChild(monthGroupDiv);
                 });
             }
@@ -789,41 +708,31 @@
             document.getElementById('authSubtitle').innerText = "Gunakan PIN untuk membuka catatan Anda";
         };
 
-        // Listener Realtime Dokumen Utama
         onSnapshot(gosenDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 if (data.pin !== undefined && data.pin !== null) savedPin = data.pin;
                 if (data.editPin !== undefined && data.editPin !== null) editPin = data.editPin;
-                if (data.budget !== undefined) budget = parseFloat(data.budget) || 0;
             }
             initAuth();
             updateUI();
         });
 
-        // Listener Realtime Pengeluaran
         onSnapshot(transactionsColRef, (querySnap) => {
             expenses = [];
-            querySnap.forEach((doc) => {
-                expenses.push({ id: doc.id, ...doc.data() });
-            });
+            querySnap.forEach((doc) => expenses.push({ id: doc.id, ...doc.data() }));
             updateUI();
         });
 
-        // Listener Realtime Pemasukan
         onSnapshot(incomesColRef, (querySnap) => {
             incomes = [];
-            querySnap.forEach((doc) => {
-                incomes.push({ id: doc.id, ...doc.data() });
-            });
+            querySnap.forEach((doc) => incomes.push({ id: doc.id, ...doc.data() }));
             updateUI();
         });
 
-        // Login PIN Akses Utama
-        pinForm.addEventListener('submit', async (e) => {
+        pinForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const val = pinInput.value;
-            if (val === savedPin) {
+            if (pinInput.value === savedPin) {
                 authOverlay.classList.add('hidden');
                 mainContent.classList.remove('hidden');
             } else {
@@ -833,18 +742,11 @@
         });
 
         document.getElementById('resetPinBtn').addEventListener('click', async () => {
-            if (verifyPin()) {
-                if(confirm("Reset PIN Utama kembali ke default (2006)?")) {
-                    try {
-                        await setDoc(gosenDocRef, { pin: "2006" }, { merge: true });
-                        savedPin = "2006";
-                        pinInput.value = '';
-                        initAuth();
-                        alert("PIN Utama di-reset ke 2006.");
-                    } catch (err) {
-                        alert("Gagal mereset PIN!");
-                    }
-                }
+            if (verifyPin() && confirm("Reset PIN Utama kembali ke default (2006)?")) {
+                await setDoc(gosenDocRef, { pin: "2006" }, { merge: true });
+                savedPin = "2006";
+                pinInput.value = '';
+                alert("PIN Utama di-reset ke 2006.");
             }
         });
 
@@ -854,86 +756,33 @@
             pinInput.value = '';
         });
 
-        // Simpan Anggaran
-        document.getElementById('budgetForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const newBudget = parseFloat(document.getElementById('budgetInput').value) || 0;
-
-            if (!verifyEditPin()) return;
-
-            try {
-                const todayStr = new Date().toISOString().split('T')[0];
-                await setDoc(gosenDocRef, { budget: newBudget }, { merge: true });
-                await addDoc(incomesColRef, {
-                    amount: newBudget,
-                    description: "Anggaran Awal",
-                    date: todayStr,
-                    createdAt: new Date()
-                });
-
-                document.getElementById('budgetInput').value = '';
-                alert("Anggaran berhasil disimpan dan dicatat ke riwayat pemasukan.");
-            } catch (err) {
-                console.error(err);
-                alert("Gagal menyimpan anggaran!");
-            }
-        });
-
-        // Tambah Pemasukan
         document.getElementById('incomeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('incomeAmount').value);
             const description = document.getElementById('incomeDescription').value;
             const date = document.getElementById('incomeDate').value;
 
-            if (!amount || !description || !date) return;
-            if (!verifyEditPin()) return;
-
-            try {
-                await addDoc(incomesColRef, {
-                    amount,
-                    description,
-                    date,
-                    createdAt: new Date()
-                });
-
-                document.getElementById('incomeAmount').value = '';
-                document.getElementById('incomeDescription').value = '';
-                alert("Pemasukan berhasil ditambahkan.");
-            } catch (err) {
-                console.error(err);
-                alert("Gagal menambah pemasukan!");
-            }
+            if (!amount || !description || !date || !verifyEditPin()) return;
+            await addDoc(incomesColRef, { amount, description, date, createdAt: new Date() });
+            document.getElementById('incomeAmount').value = '';
+            document.getElementById('incomeDescription').value = '';
+            alert("Pemasukan berhasil ditambahkan.");
         });
 
-        // Cloudinary Widget
         const myWidget = window.cloudinary.createUploadWidget(
-            {
-                cloudName: 'cwg8z0zz',
-                uploadPreset: 'Gosenkris'
-            },
+            { cloudName: 'cwg8z0zz', uploadPreset: 'Gosenkris' },
             (error, result) => {
                 if (!error && result && result.event === 'success') {
                     currentBillUrl = result.info.secure_url;
                     const uploadBtn = document.getElementById('uploadBtn');
-                    if (uploadBtn) {
-                        uploadBtn.innerText = "✓ Bukti Terunggah";
-                        uploadBtn.style.color = "#34d399";
-                    }
+                    if (uploadBtn) { uploadBtn.innerText = "✓ Bukti Terunggah"; uploadBtn.style.color = "#34d399"; }
                     alert("Foto bukti berhasil diunggah!");
                 }
             }
         );
 
-        const uploadBtn = document.getElementById('uploadBtn');
-        if (uploadBtn) {
-            uploadBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                myWidget.open();
-            });
-        }
+        document.getElementById('uploadBtn')?.addEventListener('click', (e) => { e.preventDefault(); myWidget.open(); });
 
-        // Tambah Pengeluaran
         document.getElementById('expenseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('amount').value);
@@ -942,67 +791,36 @@
             const category = document.getElementById('category').value;
             const submitBtn = document.getElementById('submitBtn');
 
-            if (!amount || !description || !date || !category) return;
-            if (!verifyEditPin()) return;
+            if (!amount || !description || !date || !category || !verifyEditPin()) return;
 
             submitBtn.disabled = true;
             submitBtn.innerText = "Menyimpan...";
+            await addDoc(transactionsColRef, { amount, description, date, category, billUrl: currentBillUrl, createdAt: new Date() });
+            document.getElementById('amount').value = '';
+            document.getElementById('description').value = '';
+            currentBillUrl = null;
 
-            try {
-                await addDoc(transactionsColRef, {
-                    amount,
-                    description,
-                    date,
-                    category,
-                    billUrl: currentBillUrl,
-                    createdAt: new Date()
-                });
-
-                document.getElementById('amount').value = '';
-                document.getElementById('description').value = '';
-                currentBillUrl = null;
-                
-                if (uploadBtn) {
-                    uploadBtn.innerText = "📷 Unggah Bukti Pembayaran";
-                    uploadBtn.style.borderColor = "#475569";
-                    uploadBtn.style.color = "#38bdf8";
-                }
-
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Catat Pengeluaran";
-                alert("Pengeluaran berhasil ditambahkan.");
-            } catch (err) {
-                console.error(err);
-                alert("Gagal menambah pengeluaran!");
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Catat Pengeluaran";
-            }
+            const uploadBtn = document.getElementById('uploadBtn');
+            if (uploadBtn) { uploadBtn.innerText = "📷 Unggah Bukti Pembayaran"; uploadBtn.style.borderColor = "#475569"; uploadBtn.style.color = "#38bdf8"; }
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Catat Pengeluaran";
+            alert("Pengeluaran berhasil ditambahkan.");
         });
 
-        // Fungsi Hapus Global
         window.deleteExpense = async (id) => {
-            if (!verifyEditPin()) return;
-            try {
+            if (verifyEditPin()) {
                 await deleteDoc(doc(db, 'pengeluaran', 'Gosen', 'transaksi', id));
                 alert("Pengeluaran berhasil dihapus.");
-            } catch (err) {
-                console.error(err);
-                alert("Gagal menghapus pengeluaran!");
             }
         };
 
         window.deleteIncome = async (id) => {
-            if (!verifyEditPin()) return;
-            try {
+            if (verifyEditPin()) {
                 await deleteDoc(doc(db, 'pengeluaran', 'Gosen', 'pemasukan', id));
                 alert("Pemasukan berhasil dihapus.");
-            } catch (err) {
-                console.error(err);
-                alert("Gagal menghapus pemasukan!");
             }
         };
 
-        // Tanggal default hari ini
         document.getElementById('date').valueAsDate = new Date();
         document.getElementById('incomeDate').valueAsDate = new Date();
     </script>
