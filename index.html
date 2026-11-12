@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Keuangan GOSEN</title>
+    <!-- Cloudinary Widget Script -->
     <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
     <style>
         * {
@@ -385,7 +386,16 @@
         </header>
 
         <div class="container">
-            <!-- CARDS RINGKASAN AKUMULATIF PER BULAN -->
+            <!-- KARTU TOTAL SALDO AKHIR GABUNGAN -->
+            <div class="summary-section-title" style="margin-top: 10px;">💳 Total Saldo Akhir Keseluruhan</div>
+            <div class="cards-grid">
+                <div class="card" style="border-color: rgba(16, 185, 129, 0.3);">
+                    <div class="card-title">Sisa Saldo Gabungan (Semua Periode)</div>
+                    <div id="globalBalanceCard" class="card-value val-balance">Rp 0</div>
+                </div>
+            </div>
+
+            <!-- WILAYAH RINGKASAN BULANAN MANDIRI -->
             <div id="monthlySummaryContainer"></div>
 
             <div class="main-grid">
@@ -547,6 +557,18 @@
         const updateUI = () => {
             saveToLocalStorage();
 
+            // Kalkulasi Total Global Seluruh Periode untuk Kartu Saldo Akhir Gabungan
+            const totalGlobalInc = incomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
+            const totalGlobalExp = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
+            const globalBalance = totalGlobalInc - totalGlobalExp;
+            
+            const globalCard = document.getElementById('globalBalanceCard');
+            if (globalCard) {
+                globalCard.innerText = formatRupiah(globalBalance);
+                globalCard.style.color = globalBalance < 0 ? '#f43f5e' : '#10b981';
+            }
+
+            // Kelompokkan Data per Bulan
             const incByMonth = incomes.reduce((acc, item) => {
                 const monthKey = item.date ? item.date.substring(0, 7) : 'Lainnya';
                 if (!acc[monthKey]) acc[monthKey] = [];
@@ -561,35 +583,30 @@
                 return acc;
             }, {});
 
-            const uniqueMonths = Array.from(new Set([...Object.keys(incByMonth), ...Object.keys(expByMonth)])).sort();
+            const uniqueMonths = Array.from(new Set([...Object.keys(incByMonth), ...Object.keys(expByMonth)])).sort().reverse();
 
-            // 1. RENDER RINGKASAN AKUMULATIF PER BULAN
+            // 1. RENDER RINGKASAN BULANAN MANDIRI
             const summaryContainer = document.getElementById('monthlySummaryContainer');
             summaryContainer.innerHTML = '';
-
-            let runningIncome = 0;
-            let runningExpense = 0;
 
             if (uniqueMonths.length === 0) {
                 summaryContainer.innerHTML = `
                     <div class="cards-grid">
                         <div class="card">
-                            <div class="card-title">Total Pemasukan</div>
+                            <div class="card-title">Total Pemasukan Bulanan</div>
                             <div class="card-value val-income">Rp 0</div>
                         </div>
                         <div class="card">
-                            <div class="card-title">Total Pengeluaran</div>
+                            <div class="card-title">Total Pengeluaran Bulanan</div>
                             <div class="card-value val-expense">Rp 0</div>
                         </div>
                         <div class="card">
-                            <div class="card-title">Sisa Saldo Akumulatif</div>
+                            <div class="card-title">Sisa Saldo Bulanan</div>
                             <div class="card-value val-balance">Rp 0</div>
                         </div>
                     </div>
                 `;
             } else {
-                const summarySections = [];
-
                 uniqueMonths.forEach(monthKey => {
                     const namaBulan = formatMonthName(monthKey);
                     const monthIncomes = incByMonth[monthKey] || [];
@@ -598,33 +615,29 @@
                     const monthlyInc = monthIncomes.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0);
                     const monthlyExp = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount || 0), 0);
 
-                    runningIncome += monthlyInc;
-                    runningExpense += monthlyExp;
-                    const runningBalance = runningIncome - runningExpense;
-                    const balColor = runningBalance < 0 ? '#f43f5e' : '#10b981';
+                    const monthlyBalance = monthlyInc - monthlyExp;
+                    const balColor = monthlyBalance < 0 ? '#f43f5e' : '#10b981';
 
                     const sectionDiv = document.createElement('div');
                     sectionDiv.innerHTML = `
-                        <div class="summary-section-title">📊 Saldo Akumulatif s/d ${namaBulan}</div>
+                        <div class="summary-section-title">📊 Kinerja Finansial ${namaBulan}</div>
                         <div class="cards-grid">
                             <div class="card">
-                                <div class="card-title">Total Pemasukan (s/d ${namaBulan})</div>
-                                <div class="card-value val-income">${formatRupiah(runningIncome)}</div>
+                                <div class="card-title">Total Pemasukan (${namaBulan})</div>
+                                <div class="card-value val-income">${formatRupiah(monthlyInc)}</div>
                             </div>
                             <div class="card">
-                                <div class="card-title">Total Pengeluaran (s/d ${namaBulan})</div>
-                                <div class="card-value val-expense">${formatRupiah(runningExpense)}</div>
+                                <div class="card-title">Total Pengeluaran (${namaBulan})</div>
+                                <div class="card-value val-expense">${formatRupiah(monthlyExp)}</div>
                             </div>
                             <div class="card">
-                                <div class="card-title">Sisa Saldo Akumulatif</div>
-                                <div class="card-value val-balance" style="color: ${balColor};">${formatRupiah(runningBalance)}</div>
+                                <div class="card-title">Sisa Saldo Bersih (${namaBulan})</div>
+                                <div class="card-value val-balance" style="color: ${balColor};">${formatRupiah(monthlyBalance)}</div>
                             </div>
                         </div>
                     `;
-                    summarySections.push(sectionDiv);
+                    summaryContainer.appendChild(sectionDiv);
                 });
-
-                summarySections.reverse().forEach(sec => summaryContainer.appendChild(sec));
             }
 
             // 2. RENDER TABEL PEMASUKAN PER BULAN
@@ -633,7 +646,8 @@
             if (incomes.length === 0) {
                 containerIncome.innerHTML = '<p style="color:#94a3b8; font-size:13px; text-align:center; padding: 20px 0;">Belum ada catatan pemasukan.</p>';
             } else {
-                Object.keys(incByMonth).sort().reverse().forEach(monthKey => {
+                uniqueMonths.forEach(monthKey => {
+                    if (!incByMonth[monthKey]) return;
                     const namaBulan = formatMonthName(monthKey);
                     const monthGroupDiv = document.createElement('div');
                     monthGroupDiv.className = 'month-group';
@@ -669,7 +683,8 @@
             if (expenses.length === 0) {
                 containerExpense.innerHTML = '<p style="color:#94a3b8; font-size:13px; text-align:center; padding: 20px 0;">Belum ada catatan pengeluaran.</p>';
             } else {
-                Object.keys(expByMonth).sort().reverse().forEach(monthKey => {
+                uniqueMonths.forEach(monthKey => {
+                    if (!expByMonth[monthKey]) return;
                     const namaBulan = formatMonthName(monthKey);
                     const monthGroupDiv = document.createElement('div');
                     monthGroupDiv.className = 'month-group';
