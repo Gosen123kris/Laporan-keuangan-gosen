@@ -21,15 +21,17 @@
             padding-bottom: 40px;
         }
 
-        /* OVERLAY LOCK */
+        /* OVERLAY LOCK DENGAN GAMBAR LATAR FULLSCREEN */
         #authOverlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(15px);
+            background: 
+                linear-gradient(rgba(15, 23, 42, 0.32), rgba(15, 23, 42, 0.45)),
+                url('https://res.cloudinary.com/cwg8z0zz/image/upload/Screenshot_20261112_110716_Google.jpg') no-repeat center center;
+            background-size: cover;
             z-index: 9999;
             display: flex;
             align-items: center;
@@ -37,29 +39,32 @@
             padding: 20px;
         }
 
+        /* KARTU PIN TRANSPARAN (GLASSMORPHISM) */
         .auth-card {
-            background: rgba(30, 41, 59, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(15, 23, 42, 0.32);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 24px;
             padding: 32px 24px;
             max-width: 380px;
             width: 100%;
             text-align: center;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
         }
 
         .auth-card h2 {
             font-size: 22px;
             margin-bottom: 8px;
-            background: linear-gradient(to right, #818cf8, #c084fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #ffffff;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
         }
 
         .auth-card p {
             font-size: 13px;
-            color: #94a3b8;
+            color: #e2e8f0;
             margin-bottom: 24px;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
         }
 
         .pin-input {
@@ -68,34 +73,59 @@
             font-size: 24px;
             letter-spacing: 10px;
             padding: 12px;
-            background: #0f172a;
-            border: 2px solid #475569;
+            background: rgba(15, 23, 42, 0.38);
+            backdrop-filter: blur(4px);
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
             border-radius: 12px;
             color: #fff;
             margin-bottom: 16px;
             outline: none;
+            transition: border-color 0.25s ease, background 0.25s ease;
+        }
+
+        .pin-input::placeholder {
+            color: rgba(255, 255, 255, 0.55);
         }
 
         .pin-input:focus {
-            border-color: #6366f1;
+            border-color: #818cf8;
+            background: rgba(15, 23, 42, 0.55);
         }
 
         .btn-primary {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            background: linear-gradient(90deg, rgba(79, 70, 229, 0.88), rgba(124, 58, 237, 0.88));
+            backdrop-filter: blur(4px);
             color: white;
-            border: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 12px;
             font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
         }
 
         .btn-primary:hover {
-            opacity: 0.9;
+            opacity: 0.95;
             transform: translateY(-2px);
+        }
+
+        .btn-reset-pin {
+            background: none;
+            border: none;
+            color: #e2e8f0;
+            font-size: 12px;
+            margin-top: 16px;
+            cursor: pointer;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+            transition: color 0.2s ease;
+        }
+
+        .btn-reset-pin:hover {
+            color: #ffffff;
+            text-decoration: underline;
         }
 
         header {
@@ -142,8 +172,73 @@
             margin: 24px 0 12px 0;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 8px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* COLLAPSIBLE HEADER & SMOOTH TRANSITION */
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+            padding: 10px 14px;
+            background: rgba(30, 41, 59, 0.65);
+            border: 1px solid rgba(56, 189, 248, 0.18);
+            border-radius: 14px;
+            transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+        }
+
+        .collapsible-header:hover {
+            background: rgba(30, 41, 59, 0.95);
+            border-color: rgba(56, 189, 248, 0.45);
+        }
+
+        .collapsible-header:active {
+            transform: scale(0.99);
+        }
+
+        .toggle-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            padding: 4px 10px;
+            border-radius: 999px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .chevron-icon {
+            display: inline-block;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 10px;
+        }
+
+        .collapsible-header.collapsed .chevron-icon {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-body {
+            display: grid;
+            grid-template-rows: 1fr;
+            transition: grid-template-rows 0.38s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.32s ease, margin-top 0.32s ease;
+            opacity: 1;
+            margin-top: 12px;
+        }
+
+        .collapsible-body.collapsed {
+            grid-template-rows: 0fr;
+            opacity: 0;
+            margin-top: 0;
+            pointer-events: none;
+        }
+
+        .collapsible-inner {
+            overflow: hidden;
         }
 
         .cards-grid {
@@ -323,36 +418,99 @@
 
         .hidden { display: none !important; }
 
-        .btn-bill {
-            display: inline-block;
-            background: #1e293b;
-            color: #38bdf8;
-            border: 1px solid #475569;
-            padding: 4px 8px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 11px;
-            transition: 0.2s;
+        /* MODERN ANIMATED "LIHAT BILL" BUTTON */
+        @keyframes billPulseGlow {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.45);
+                border-color: rgba(56, 189, 248, 0.6);
+            }
+            50% {
+                box-shadow: 0 0 12px 2px rgba(56, 189, 248, 0.35);
+                border-color: #38bdf8;
+            }
         }
 
-        .btn-bill:hover {
-            background: #334155;
-            color: #fff;
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-1.5px); }
+        }
+
+        .btn-bill {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.22), rgba(99, 102, 241, 0.25));
+            color: #7dd3fc;
+            border: 1px solid rgba(56, 189, 248, 0.55);
+            padding: 5px 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            animation: billPulseGlow 2.6s infinite ease-in-out;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            white-space: nowrap;
+        }
+
+        .btn-bill .bill-icon {
+            display: inline-block;
+            font-size: 12px;
+            animation: iconFloat 2s infinite ease-in-out;
+        }
+
+        .btn-bill::after {
+            content: "Klik di sini";
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%) translateY(4px) scale(0.92);
+            background: linear-gradient(90deg, #0284c7, #4f46e5);
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 20;
+        }
+
+        .btn-bill:hover,
+        .btn-bill:focus-visible {
+            background: linear-gradient(135deg, #0284c7, #4f46e5);
+            color: #ffffff;
+            border-color: #bae6fd;
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 6px 16px rgba(56, 189, 248, 0.45);
+        }
+
+        .btn-bill:hover::after,
+        .btn-bill:focus-visible::after {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0) scale(1);
+        }
+
+        .btn-bill:active {
+            transform: scale(0.96);
         }
 
         .month-header {
             font-size: 15px;
             color: #cbd5e1;
-            margin-bottom: 12px;
-            padding-bottom: 6px;
-            border-bottom: 1px dashed #334155;
+            margin-bottom: 0;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 8px;
         }
 
         .month-group {
-            margin-bottom: 24px;
+            margin-bottom: 16px;
         }
 
         .month-group:last-child {
@@ -371,7 +529,7 @@
                 <input type="password" id="pinInput" maxlength="6" class="pin-input" placeholder="••••••" required autocomplete="off">
                 <button type="submit" class="btn-primary">Buka Dompet</button>
             </form>
-            <button id="resetPinBtn" style="background:none; border:none; color:#64748b; font-size:11px; margin-top:16px; cursor:pointer;">
+            <button id="resetPinBtn" class="btn-reset-pin">
                 Lupa / Buat Ulang PIN
             </button>
         </div>
@@ -512,6 +670,9 @@
         let incomes = [];
         let currentBillUrl = null;
 
+        // Menyimpan status buka/tutup setiap bagian agar tetap terjaga
+        const collapseState = {};
+
         const authOverlay = document.getElementById('authOverlay');
         const mainContent = document.getElementById('mainContent');
         const pinForm = document.getElementById('pinForm');
@@ -529,6 +690,27 @@
             if (monthKey === 'Lainnya') return 'Lainnya';
             const [tahun, bulan] = monthKey.split('-');
             return new Date(tahun, bulan - 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+        };
+
+        // Fungsi global untuk membuka/menutup bagian dengan transisi mulus
+        window.toggleSection = (sectionId) => {
+            const header = document.getElementById(`header_${sectionId}`);
+            const body = document.getElementById(`body_${sectionId}`);
+            const label = document.getElementById(`label_${sectionId}`);
+            if (!header || !body) return;
+
+            const isCurrentlyCollapsed = body.classList.contains('collapsed');
+            if (isCurrentlyCollapsed) {
+                body.classList.remove('collapsed');
+                header.classList.remove('collapsed');
+                if (label) label.innerText = 'Sembunyikan';
+                collapseState[sectionId] = false;
+            } else {
+                body.classList.add('collapsed');
+                header.classList.add('collapsed');
+                if (label) label.innerText = 'Tampilkan';
+                collapseState[sectionId] = true;
+            }
         };
 
         const saveToLocalStorage = () => {
@@ -585,7 +767,7 @@
 
             const uniqueMonths = Array.from(new Set([...Object.keys(incByMonth), ...Object.keys(expByMonth)])).sort().reverse();
 
-            // 1. RENDER RINGKASAN BULANAN MANDIRI
+            // 1. RENDER RINGKASAN BULANAN MANDIRI (DENGAN FITUR BUKA-TUTUP)
             const summaryContainer = document.getElementById('monthlySummaryContainer');
             summaryContainer.innerHTML = '';
 
@@ -607,7 +789,7 @@
                     </div>
                 `;
             } else {
-                uniqueMonths.forEach(monthKey => {
+                uniqueMonths.forEach((monthKey, idx) => {
                     const namaBulan = formatMonthName(monthKey);
                     const monthIncomes = incByMonth[monthKey] || [];
                     const monthExpenses = expByMonth[monthKey] || [];
@@ -618,21 +800,39 @@
                     const monthlyBalance = monthlyInc - monthlyExp;
                     const balColor = monthlyBalance < 0 ? '#f43f5e' : '#10b981';
 
+                    const secId = `summary_${monthKey}`;
+                    // Bulan terbaru (idx === 0) terbuka, bulan-bulan sebelumnya (seperti Oktober) default tertutup
+                    if (collapseState[secId] === undefined) {
+                        collapseState[secId] = idx > 0;
+                    }
+                    const isCollapsed = collapseState[secId];
+
                     const sectionDiv = document.createElement('div');
+                    sectionDiv.style.marginBottom = '16px';
                     sectionDiv.innerHTML = `
-                        <div class="summary-section-title">📊 Kinerja Finansial ${namaBulan}</div>
-                        <div class="cards-grid">
-                            <div class="card">
-                                <div class="card-title">Total Pemasukan (${namaBulan})</div>
-                                <div class="card-value val-income">${formatRupiah(monthlyInc)}</div>
-                            </div>
-                            <div class="card">
-                                <div class="card-title">Total Pengeluaran (${namaBulan})</div>
-                                <div class="card-value val-expense">${formatRupiah(monthlyExp)}</div>
-                            </div>
-                            <div class="card">
-                                <div class="card-title">Sisa Saldo Bersih (${namaBulan})</div>
-                                <div class="card-value val-balance" style="color: ${balColor};">${formatRupiah(monthlyBalance)}</div>
+                        <div id="header_${secId}" class="summary-section-title collapsible-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleSection('${secId}')" style="margin: 12px 0 0 0;">
+                            <span>📊 Kinerja Finansial ${namaBulan}</span>
+                            <span class="toggle-pill">
+                                <span id="label_${secId}">${isCollapsed ? 'Tampilkan' : 'Sembunyikan'}</span>
+                                <span class="chevron-icon">▼</span>
+                            </span>
+                        </div>
+                        <div id="body_${secId}" class="collapsible-body ${isCollapsed ? 'collapsed' : ''}">
+                            <div class="collapsible-inner">
+                                <div class="cards-grid" style="margin-bottom: 8px;">
+                                    <div class="card">
+                                        <div class="card-title">Total Pemasukan (${namaBulan})</div>
+                                        <div class="card-value val-income">${formatRupiah(monthlyInc)}</div>
+                                    </div>
+                                    <div class="card">
+                                        <div class="card-title">Total Pengeluaran (${namaBulan})</div>
+                                        <div class="card-value val-expense">${formatRupiah(monthlyExp)}</div>
+                                    </div>
+                                    <div class="card">
+                                        <div class="card-title">Sisa Saldo Bersih (${namaBulan})</div>
+                                        <div class="card-value val-balance" style="color: ${balColor};">${formatRupiah(monthlyBalance)}</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -640,26 +840,42 @@
                 });
             }
 
-            // 2. RENDER TABEL PEMASUKAN PER BULAN
+            // 2. RENDER TABEL PEMASUKAN PER BULAN (DENGAN FITUR BUKA-TUTUP)
             const containerIncome = document.getElementById('incomeTablesContainer');
             containerIncome.innerHTML = '';
             if (incomes.length === 0) {
                 containerIncome.innerHTML = '<p style="color:#94a3b8; font-size:13px; text-align:center; padding: 20px 0;">Belum ada catatan pemasukan.</p>';
             } else {
-                uniqueMonths.forEach(monthKey => {
-                    if (!incByMonth[monthKey]) return;
+                const incMonths = uniqueMonths.filter(m => incByMonth[m]);
+                incMonths.forEach((monthKey, idx) => {
                     const namaBulan = formatMonthName(monthKey);
+                    const secId = `inc_${monthKey}`;
+                    if (collapseState[secId] === undefined) {
+                        collapseState[secId] = idx > 0;
+                    }
+                    const isCollapsed = collapseState[secId];
+
                     const monthGroupDiv = document.createElement('div');
                     monthGroupDiv.className = 'month-group';
                     monthGroupDiv.innerHTML = `
-                        <h4 class="month-header" style="color: #34d399;">📅 Pemasukan ${namaBulan}</h4>
-                        <div class="table-wrapper">
-                            <table>
-                                <thead>
-                                    <tr><th>Tanggal</th><th>Keterangan</th><th style="text-align: right;">Jumlah</th><th style="text-align: center;">Aksi</th></tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
+                        <h4 id="header_${secId}" class="month-header collapsible-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleSection('${secId}')" style="color: #34d399;">
+                            <span>📅 Pemasukan ${namaBulan}</span>
+                            <span class="toggle-pill" style="color: #34d399; border-color: rgba(52, 211, 153, 0.3); background: rgba(52, 211, 153, 0.1);">
+                                <span id="label_${secId}">${isCollapsed ? 'Tampilkan' : 'Sembunyikan'}</span>
+                                <span class="chevron-icon">▼</span>
+                            </span>
+                        </h4>
+                        <div id="body_${secId}" class="collapsible-body ${isCollapsed ? 'collapsed' : ''}">
+                            <div class="collapsible-inner">
+                                <div class="table-wrapper">
+                                    <table>
+                                        <thead>
+                                            <tr><th>Tanggal</th><th>Keterangan</th><th style="text-align: right;">Jumlah</th><th style="text-align: center;">Aksi</th></tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     `;
                     const tbody = monthGroupDiv.querySelector('tbody');
@@ -677,31 +893,49 @@
                 });
             }
 
-            // 3. RENDER TABEL PENGELUARAN PER BULAN
+            // 3. RENDER TABEL PENGELUARAN PER BULAN (DENGAN FITUR BUKA-TUTUP & ANIMASI LIHAT BILL)
             const containerExpense = document.getElementById('expenseTablesContainer');
             containerExpense.innerHTML = '';
             if (expenses.length === 0) {
                 containerExpense.innerHTML = '<p style="color:#94a3b8; font-size:13px; text-align:center; padding: 20px 0;">Belum ada catatan pengeluaran.</p>';
             } else {
-                uniqueMonths.forEach(monthKey => {
-                    if (!expByMonth[monthKey]) return;
+                const expMonths = uniqueMonths.filter(m => expByMonth[m]);
+                expMonths.forEach((monthKey, idx) => {
                     const namaBulan = formatMonthName(monthKey);
+                    const secId = `exp_${monthKey}`;
+                    if (collapseState[secId] === undefined) {
+                        collapseState[secId] = idx > 0;
+                    }
+                    const isCollapsed = collapseState[secId];
+
                     const monthGroupDiv = document.createElement('div');
                     monthGroupDiv.className = 'month-group';
                     monthGroupDiv.innerHTML = `
-                        <h4 class="month-header">📅 Pengeluaran ${namaBulan}</h4>
-                        <div class="table-wrapper">
-                            <table>
-                                <thead>
-                                    <tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Bukti</th><th style="text-align: right;">Jumlah</th><th style="text-align: center;">Aksi</th></tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
+                        <h4 id="header_${secId}" class="month-header collapsible-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleSection('${secId}')">
+                            <span>📅 Pengeluaran ${namaBulan}</span>
+                            <span class="toggle-pill">
+                                <span id="label_${secId}">${isCollapsed ? 'Tampilkan' : 'Sembunyikan'}</span>
+                                <span class="chevron-icon">▼</span>
+                            </span>
+                        </h4>
+                        <div id="body_${secId}" class="collapsible-body ${isCollapsed ? 'collapsed' : ''}">
+                            <div class="collapsible-inner">
+                                <div class="table-wrapper">
+                                    <table>
+                                        <thead>
+                                            <tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Bukti</th><th style="text-align: right;">Jumlah</th><th style="text-align: center;">Aksi</th></tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     `;
                     const tbody = monthGroupDiv.querySelector('tbody');
                     expByMonth[monthKey].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
-                        const billHtml = item.billUrl ? `<a href="${item.billUrl}" target="_blank" class="btn-bill">Lihat Bill</a>` : `<span style="color: #475569; font-size: 11px;">Tidak ada</span>`;
+                        const billHtml = item.billUrl 
+                            ? `<a href="${item.billUrl}" target="_blank" class="btn-bill" title="Klik di sini untuk melihat foto bill"><span class="bill-icon">🧾</span> Lihat Bill</a>` 
+                            : `<span style="color: #475569; font-size: 11px;">Tidak ada</span>`;
                         tbody.innerHTML += `
                             <tr>
                                 <td style="color:#94a3b8;">${item.date}</td>
